@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>添加衣服 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="add-clothes">
+<div class="app">
+ <div class="entry">
+  <button class="down" aria-label="返回" onclick="history.length > 1 ? AppNav.back() : AppNav.go('home.html')"><span data-icon="chevron-down"></span></button>
+  <h1>添加衣服</h1>
+
+  <div class="ways"><button class="way" id="wayAlbum"><span data-icon="photo"></span>相册导入</button><button class="way" id="wayCam"><span data-icon="camera"></span>拍照导入</button></div>
+  <form id="garmentForm" class="garment-form" hidden>
+    <img id="garmentPhoto" alt="衣物照片">
+    <label>名称<input id="garmentName" maxlength="80" required placeholder="例如：白色衬衫"></label>
+    <label>分类<select id="garmentCategory"><option>上衣</option><option>下装</option><option>鞋子</option><option>连体裙</option></select></label>
+    <label>场景<select id="garmentScene"><option>日常</option><option>通勤</option><option>约会</option><option>旅行</option><option>其他</option></select></label>
+    <button class="btn btn-primary btn-block" id="saveGarment">保存衣物</button>
+  </form>
+  <input type="file" accept="image/*" id="fileInput" class="hidden">
+  <input type="file" accept="image/*" capture="environment" id="camInput" class="hidden">
+ </div>
+</div>
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/add-clothes.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>

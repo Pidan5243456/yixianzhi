@@ -1,0 +1,248 @@
+/* Original layout follows figma-exports/原型图; white surfaces, type and accents follow PetNext. */
+@font-face {font-family:"Noto Sans SC";src:url("../assets/fonts/NotoSansSC-Variable.ttf") format("truetype");font-style:normal;font-weight:100 900;font-display:swap;}
+:root {
+  --ink:#1d1d1d; --ink-2:#666; --muted:#737373; --accent:#fff958;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; --font-display:var(--font-body);
+  --bg:#fff; --card:#fff; --fill:#f6f6f6; --fill-2:#ebebeb; --line:#e5e5e5;
+  --r-xl:28px; --r-lg:22px; --r-md:16px; --pad:20px;
+  --shadow-card:none; --shadow-float:0 8px 24px #27242214;
+  --grad:linear-gradient(var(--accent),var(--accent)); --grad-soft:#f6f6f6;
+  --nav-h:calc(68px + env(safe-area-inset-bottom));
+}
+html,body {background:#fff;}
+body {font-size:15px;}
+button,input,select,textarea {font-family:var(--font-body);}
+button,a,[role=button] {touch-action:manipulation;}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible {outline:2px solid var(--ink);outline-offset:3px;}
+.app {padding-top:calc(env(safe-area-inset-top) + 12px);background:var(--bg);box-shadow:none;}
+.app::before {display:none;}
+.app:has(.tabbar) {padding-bottom:calc(var(--nav-h) + 18px);}
+.ui-icon {width:24px;height:24px;flex:none;vertical-align:middle;}
+.iconbtn {background:transparent;box-shadow:none;border:1px solid transparent;}
+.iconbtn .ui-icon {width:23px;height:23px;}
+.pagehead {padding:12px var(--pad) 14px;min-height:60px;}
+.h-display {font-size:30px;font-weight:800;letter-spacing:-.6px;}
+.h-sub {line-height:1.7;}
+.section-title {font-size:20px;font-weight:750;}
+.btn {min-height:50px;font-size:15px;font-weight:600;}
+.btn-ghost {border-width:1px;}
+.btn-primary {background:var(--accent);color:var(--ink);}
+.btn-primary:disabled {background:var(--fill-2);color:#666;}
+.chip.active,.pick.active {background:var(--accent);border-color:var(--accent);color:var(--ink);}
+.chip {min-height:44px;padding:10px 17px;border-width:1px;font-size:14px;font-weight:500;gap:7px;}
+.chip .ui-icon {width:17px;height:17px;}
+.chips {gap:8px;}
+.btn:disabled {opacity:.4;}
+
+.tabbar {position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nav-h);padding:8px 9px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff;}
+.tabbar a {font-size:10px;gap:5px;min-height:44px;color:#737373;}
+.tabbar a.active {color:var(--ink);font-weight:650;}
+.tabbar a .ui-icon {width:24px;height:24px;}
+.tabbar .fab {top:-27px;width:62px;height:62px;border:6px solid var(--bg);box-shadow:none;background:var(--accent);color:var(--ink);}
+.tabbar .fab .ui-icon {width:27px;height:27px;stroke-width:1.7;}
+.tabbar a.fab {color:var(--ink);}
+.fab-label {position:absolute;top:38px;width:100%;text-align:center;color:var(--muted);font-size:10px;}
+.sheet {border-radius:28px 28px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 60px #00000010;}
+.sheet-title {font-size:19px;font-weight:700;min-height:32px;}
+.sheet-x {min-width:44px;min-height:44px;top:-10px;right:-10px;}
+.modal {width:min(86%,350px);}
+.modal .link {min-height:44px;}
+.toast {white-space:normal;text-align:center;width:max-content;max-width:calc(100% - 40px);line-height:1.5;font-size:13px;bottom:112px;}
+.field {border:1px solid var(--line);padding:10px 16px;min-height:58px;border-radius:16px;}
+.field input {font-size:15px;min-height:36px;}
+.field .field-act {min-height:44px;font-size:12px;}
+.agree {font-size:11px;line-height:1.8;}
+.checkbox {width:22px;height:22px;position:relative;}
+.checkbox::before {content:'';position:absolute;inset:-11px;}
+
+/* Home / saved outfits: neutral boards with complete garments. */
+[data-page=home] .home-head {padding:14px var(--pad) 0;justify-content:space-between;align-items:center;}
+.brand {font-family:var(--font-body);font-size:30px;letter-spacing:-1.5px;font-weight:800;}
+.brand em {font-style:normal;color:var(--ink);}
+.head-mark {width:44px;height:44px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--ink);text-decoration:none;}
+[data-page=home] .sec-head {padding:24px var(--pad) 18px;display:flex;align-items:baseline;justify-content:space-between;gap:6px;}
+.home-caption {font-size:12px;color:var(--muted);}
+.collection-head {padding:15px var(--pad) 14px;display:flex;align-items:baseline;justify-content:space-between;}
+.collection-head h2 {font-size:17px;font-weight:700;}
+.collection-head span {font-size:11px;color:var(--muted);}
+.outfits,[data-page=profile] #favGrid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:4px;grid-auto-flow:dense;gap:12px;padding:0 var(--pad) 24px;align-items:stretch;}
+.ocard {grid-row:span 15;background:#f6f6f6;border-radius:22px;box-shadow:none;padding:20px 10px 46px;overflow:hidden;position:relative;}
+.ocard:nth-child(4n+1),.ocard:nth-child(4n) {grid-row:span 17;}
+.ocard:nth-child(4n+2) {background:#f6f6f6;}
+.ocard:nth-child(4n+3) {background:#f6f6f6;}
+.ocard .collage {display:grid;grid-template-columns:1.15fr 1fr;gap:2px;height:100%;min-height:0;align-items:center;}
+.ocard .collage > img:not(.ocover) {width:100%;height:84%;max-height:180px;aspect-ratio:auto;object-fit:contain;transform:rotate(-4deg);}
+.ocard .collage .side {height:100%;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+.ocard .collage .side img {width:100%;height:46%;aspect-ratio:auto;object-fit:contain;transform:rotate(5deg);}
+.ocard .ph-img {mix-blend-mode:multiply;}
+.ocard .ocover {object-fit:contain!important;background:transparent;}
+.ocard .ofoot {position:absolute;inset:0;margin:0;pointer-events:none;}
+.ocard .ofoot button {pointer-events:auto;}
+.ocard .star {position:absolute;top:5px;right:5px;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:#666;}
+.ocard .star .ui-icon {width:22px;height:22px;fill:#ffffffb3;}
+.ocard .star.on .ui-icon,[data-page=profile] .ocard .star .ui-icon {fill:var(--ink);stroke:var(--ink);}
+.ocard .try-pill {position:absolute;right:10px;bottom:10px;min-height:44px;margin:0;padding:0 14px;background:#fff;color:var(--ink);font-size:12px;display:flex;align-items:center;gap:5px;box-shadow:0 1px 5px #332a2006;}
+.try-pill .ui-icon {width:15px;height:15px;}
+.outfits>.empty,#favGrid>.empty {grid-column:1/-1;grid-row:span 24;}
+
+/* Wardrobe: large product photography, clean white cards. */
+[data-page=wardrobe] .app {background:#f4f5f6;}
+.wardrobe-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;}
+.wardrobe-heading p {font-size:12px;color:var(--muted);margin-top:5px;}
+.catbar {gap:16px;padding:12px var(--pad) 16px;}
+.catdot {appearance:none;border:0;background:transparent;padding:3px 0;min-width:60px;}
+.catdot .cir {width:62px;height:62px;box-shadow:none;border-width:1.5px;}
+.catdot .badge {background:#eceeec;min-width:20px;min-height:20px;padding:2px 5px;border:2px solid #f4f5f6;font-size:10px;}
+.catdot.on .badge {background:var(--ink);color:#fff;}
+.catdot .lbl {font-size:12px;font-weight:500;margin-top:9px;}
+.catdot .ui-icon {width:29px;height:29px;stroke-width:1.3;}
+[data-page=wardrobe] .grid2 {gap:12px;padding:8px 14px 26px;}
+.icard {box-shadow:none;padding:20px 10px 10px;border-radius:20px;}
+.icard .imgwrap {height:clamp(158px,45vw,202px);padding:2px 5px;}
+.icard .del {width:44px;height:44px;top:0;right:0;background:transparent;color:#aaa7a3;}
+.icard .del .ui-icon {width:17px;height:17px;}
+.match-pill {min-height:44px;font-size:13px;background:#f6f6f5;margin-top:12px;padding:10px 0;}
+
+/* Profile and history share the calm photographic grid. */
+[data-page=profile] .user-row {padding:22px var(--pad) 20px;gap:14px;}
+[data-page=profile] .avatar {width:58px;height:58px;background:var(--accent);color:var(--ink);border:0;font-size:23px;font-weight:600;}
+.uname {max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:20px;font-weight:700;}
+.usub {font-size:11px;}
+[data-page=profile] .seg {padding:14px var(--pad) 24px;gap:28px;}
+.seg button {min-height:44px;font-size:16px;font-weight:600;}
+.seg button.on::after {width:100%;height:2px;}
+.model-card {background:#f6f6f6;box-shadow:none;}
+.model-card .del,.big-photo .del {width:44px;height:44px;display:grid;place-items:center;}
+.hist-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:4px;grid-auto-flow:dense;gap:12px;padding:18px var(--pad) 26px;}
+.hcard {grid-row:span 17;aspect-ratio:auto;border-radius:20px;}
+.hcard:nth-child(4n+1),.hcard:nth-child(4n) {grid-row:span 21;}
+.hcard>img {object-fit:contain!important;}
+.hcard .ck {width:28px;height:28px;}
+.hist-grid>.empty {grid-row:span 30;}
+.edit-pill {min-height:44px;border-width:1px;}
+.empty {font-size:13px;line-height:1.9;}
+.empty-visual {display:block;width:72px;height:72px;border-radius:50%;background:#f6f6f6;margin:0 auto 18px;display:grid;place-items:center;color:#666;}
+.empty-visual .ui-icon {width:30px;height:30px;stroke-width:1.25;}
+.empty h3 {color:var(--ink);font-size:18px;margin-bottom:8px;}
+.empty .btn {margin-top:22px;padding:0 24px;}
+
+/* Login and onboarding follow the generous spacing of the provided screens. */
+[data-page=login] .app {background:#fff;}
+.login-body {padding:0 28px;flex:1;}
+.applogo {width:76px;height:76px;border-radius:23px;margin:clamp(52px,12dvh,115px) auto 20px;box-shadow:none;transform:rotate(-5deg);}
+.applogo .ui-icon {width:44px;height:44px;stroke-width:1.3;}
+.appname {font-size:32px;font-weight:800;letter-spacing:4px;}
+.login-tip {font-size:11px;margin:34px 0 20px;}
+[data-page=login] .field {background:#f7f7f6;border:0;min-height:58px;}
+[data-page=login] #btnLogin {margin-top:2px;}
+.login-foot {padding:24px 28px calc(36px + env(safe-area-inset-bottom));}
+.connection-link {display:flex;align-items:center;justify-content:center;min-height:44px;text-decoration:none;font-size:12px;gap:6px;}
+[data-page=onboarding] .app {background:#fff;}
+[data-page=onboarding] .step {padding:0 24px;}
+[data-page=onboarding] .step-mid {padding-top:clamp(30px,18dvh,160px);}
+[data-page=onboarding] [data-step="2"] .step-mid {padding-top:38px;}
+[data-page=onboarding] .h-display {font-size:29px;line-height:1.3;}
+[data-page=onboarding] .h-sub {font-size:14px;}
+.pick {min-height:46px;border-width:1px;font-size:15px;padding:12px 18px;font-weight:500;}
+.picks {gap:10px;margin-top:26px;}
+.skip {min-height:44px;margin-bottom:4px;}
+.step-foot {padding-bottom:calc(30px + env(safe-area-inset-bottom));}
+.sel-bar {box-shadow:none;border:1px solid var(--line);}
+.sel-bar button {min-height:44px;}
+
+/* Upload: two usable actions, with enough room for the photo guidance. */
+[data-page=add-clothes] .app {background:#fff;padding-top:env(safe-area-inset-top);}
+[data-page=add-clothes] .entry {flex:1;display:flex;flex-direction:column;padding:16px 24px calc(48px + env(safe-area-inset-bottom));}
+[data-page=add-clothes] .down {align-self:flex-start;display:grid;place-items:center;width:44px;min-height:44px;margin-bottom:clamp(45px,14dvh,120px);border:1px solid var(--line);border-radius:50%;background:white;color:var(--ink);cursor:pointer;}
+[data-page=add-clothes] .entry h1 {font-size:30px;font-weight:500;color:var(--ink);margin-bottom:18px;}
+[data-page=add-clothes] .hint {font-size:14px;color:var(--ink-2);line-height:1.9;margin-bottom:32px;}
+.ways {display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.way {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;min-height:158px;padding:24px 8px;border:0;border-radius:24px;background:var(--accent);color:var(--ink);font-size:16px;font-weight:500;cursor:pointer;}
+.way+.way {background:var(--fill);}
+.way .ui-icon {width:32px;height:32px;stroke-width:1.5;}
+.way:active {background:#eaeaea;}
+
+/* Model setup and outfit detail. */
+[data-page=create-model] .app {background:#fff;}
+.my-empty {padding:60px 26px 30px;}
+.my-empty .figure img {height:230px;object-fit:contain;}
+.my-empty h2 {font-size:21px;font-weight:700;}
+.my-empty p {font-size:13px;color:var(--ink-2);}
+.preset-grid {grid-template-columns:1fr;padding:24px 60px;}
+.preset {max-height:52dvh;aspect-ratio:.75;}
+.good {aspect-ratio:1;}
+.good .lbl,.bad .lbl {font-weight:500;}
+.tip-sub {font-size:13px;line-height:1.7;}
+.sheet-note {font-size:11px;line-height:1.7;}
+[data-page=outfit-detail] .app {padding-top:0;}
+[data-page=outfit-detail] .pagehead {position:absolute;top:env(safe-area-inset-top);left:0;right:0;z-index:5;}
+[data-page=outfit-detail] .pagehead .iconbtn {background:#ffffffd9;}
+[data-page=outfit-detail] .hero {margin:0;border-radius:0;background:#f1f2f3;min-height:51dvh;padding:54px 28px 26px;grid-template-columns:1.15fr 1fr;gap:18px;}
+[data-page=outfit-detail] .hero .main img {max-height:39dvh;aspect-ratio:auto;}
+[data-page=outfit-detail] .hero .side img {max-height:18dvh;}
+.pieces-label {font-size:19px;font-weight:700;padding:24px 20px 0;}
+.pieces {padding:16px 20px 24px;gap:10px;}
+.piece {background:#f1f2f3;padding:12px;border-radius:18px;}
+.detail-foot {padding:14px 20px calc(32px + env(safe-area-inset-bottom));background:#fff;}
+.swap-foot {margin:0 -20px;padding-left:20px;padding-right:20px;}
+
+/* Model photography retains its sampled background; controls use white surfaces. */
+[data-page=tryon] .app {padding-top:env(safe-area-inset-top);overflow:hidden;background:#fff;}
+.stage {height:66dvh;flex:none;padding-bottom:25px;background:#e4e6e5;}
+.model-wrap {height:calc(100% - 18px);}
+.model-wrap img.base,.model-wrap img.gen {max-width:100%;border-radius:0;}
+.stage-top {top:14px;}
+.stage-top .iconbtn {background:#34373666;color:white;}
+.model-switch {width:46px;height:46px;}
+.stage-side {top:54%;right:16px;}
+.stage-side .iconbtn {background:#ffffffbf;}
+.ai-match {bottom:40px;right:16px;font-size:11px;padding:0 14px;min-height:44px;background:#ffffffec;box-shadow:0 3px 16px #0000000d;}
+.ai-match .ui-icon {width:17px;height:17px;}
+.worn {filter:none;}
+.worn.photo-layer {mix-blend-mode:multiply;}
+.drawer {margin-top:-24px;border-radius:26px 26px 0 0;background:#fff;color:var(--ink);border:1px solid var(--line);}
+.drawer .grab {height:44px;flex:none;margin:0;}
+.dtabs {padding:0 0 5px;gap:46px;border-bottom:1px solid var(--line);}
+.dtabs button {min-height:44px;font-size:15px;font-weight:500;color:var(--muted);}
+.dtabs button.on {color:var(--ink);font-weight:650;}
+.dtabs button.on::after {width:100%;height:2px;bottom:0;background:var(--ink);}
+.dchips {padding:8px 14px 4px;gap:4px;}
+.dchip {min-height:44px;background:none;color:var(--muted);font-size:12px;padding:8px 13px;font-weight:400;}
+.dchip.on {background:var(--accent);color:var(--ink);font-weight:600;}
+.dgrid {padding:8px 14px calc(34px + env(safe-area-inset-bottom));gap:8px;}
+.dcell {height:112px;border-radius:15px;padding:10px;background:var(--fill);}
+.dcell.add {border:1px dashed #bdbdbd;background:#fff;color:var(--ink);}
+.dcell.on {background:#fff;border:2px solid var(--ink);}
+.dcell.on::after {content:'✓';position:absolute;bottom:5px;right:5px;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff;font-size:10px;}
+.dcell.add .ui-icon {width:28px;height:28px;}
+.drawer .grab::before {width:32px;height:4px;background:#c4c4c4;}
+.gen-loading {max-width:430px;margin:auto;}
+
+
+.sgroup {border:1px solid var(--line);}
+#btnDel {color:#fff;}
+.srow {min-height:60px;}
+.ssub {line-height:1.5;}
+.spretry {min-height:44px;min-width:64px;}
+.model-switch .model-crop {width:100%;height:100%;overflow:hidden;border-radius:50%;}
+.model-switch .model-crop img {transform:scale(2);transform-origin:50% 18%;border-radius:0;}
+@media(max-height:700px) {
+  [data-page=onboarding] .step-mid {padding-top:28px;}
+  [data-page=onboarding] [data-step="2"] .step-mid {padding-top:8px;}
+  .applogo {margin-top:28px;width:60px;height:60px;margin-bottom:12px;}
+  .login-tip {margin-top:22px;margin-bottom:16px;}
+  .my-empty {padding-top:20px;}
+  .my-empty .figure img {height:170px;}
+  .stage {height:60dvh;}
+  .dcell {height:96px;}
+  [data-page=add-clothes] .down {margin-bottom:32px;}
+}
+@media(prefers-reduced-motion:reduce) {.rise {animation:none;}*{scroll-behavior:auto!important;}}
+
+/* Personal wardrobe workflow, shared with the existing white theme. */
+.product-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.home-modes{padding:10px 20px}.home-modes .btn{font-size:13px;padding:10px 14px;min-height:44px}
+.product-dialog{border:1px solid var(--line);border-radius:24px;padding:24px;width:min(400px,calc(100% - 32px));color:var(--ink);background:#fff;margin:auto}.product-dialog::backdrop{background:#0005}.product-dialog h2{font-size:22px;margin-bottom:22px}.product-dialog label,.garment-form label{display:flex;flex-direction:column;gap:8px;margin:16px 0;font-size:15px}.product-dialog input,.product-dialog select,.garment-form input,.garment-form select{font:inherit;min-height:48px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;width:100%;color:var(--ink)}.product-dialog .product-actions{margin-top:24px}.product-dialog .btn{flex:1;min-height:48px}
+[data-page=add-clothes] .entry{min-height:100dvh;height:auto;padding-bottom:40px;overflow:auto}.garment-form{width:100%;max-width:430px;text-align:left;margin:20px auto}.garment-form[hidden]{display:none}.garment-form>img{width:100%;height:230px;object-fit:contain;border-radius:20px;background:#f6f6f6}.preview-edit{padding:0 20px 20px}.preview-edit .btn{min-height:44px;font-size:14px}
+.outfit-open{border:0;padding:0;width:100%;text-align:left;background:transparent;color:inherit;cursor:pointer}.outfit-open h3{font-size:14px;font-weight:600;margin:12px 0 0;overflow-wrap:anywhere}.outfit-open:focus-visible{outline:2px solid var(--ink);outline-offset:4px}.product-empty{grid-column:1/-1}.missing-piece{display:inline-block;font-size:13px;color:var(--muted);padding:10px 0}.ocard .star{min-width:44px;min-height:44px}.ocard .try-pill{padding:10px 8px;min-height:44px;margin-left:6px;font-size:12px}
+.tryon-actions{position:absolute;bottom:34px;left:14px;right:14px;z-index:6;display:flex;gap:7px}.tryon-actions .btn{flex:1;padding:10px 4px;min-height:44px;font-size:13px;white-space:nowrap;background:#fff}.tryon-actions .btn-primary{background:var(--accent);color:var(--ink)}.preview-kind{position:absolute;left:18px;top:76px;z-index:4;font-size:13px;padding:6px 10px;background:#ffffffde;border-radius:12px}
+[data-page=tryon] .gen-loading{position:absolute;inset:auto 14px 90px;max-width:none;flex-direction:row;padding:10px;border-radius:14px;background:#fffffff0;backdrop-filter:none;z-index:4;pointer-events:none;font-size:13px}.gen-loading .spinner{width:20px;height:20px}

@@ -1,0 +1,16 @@
+{
+  "sourceProject": "PetNext_APP",
+  "sourceDirectory": "app/assets/fonts",
+  "authorizedByUser": true,
+  "license": "SIL Open Font License 1.1",
+  "files": [
+    {
+      "file": "NotoSansSC-Variable.ttf",
+      "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+    },
+    {
+      "file": "NotoSansSC-OFL.txt",
+      "sha256": "babcfe66c8a098b2fa279bc724a3a342f8124f77ce18941fbcc1bbb39823cded"
+    }
+  ]
+}

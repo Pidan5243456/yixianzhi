@@ -1,0 +1,7 @@
+{
+  "appId": "com.yixianzhi.app",
+  "appName": "衣先知",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": true, "backgroundColor": "#ffffff" }
+}

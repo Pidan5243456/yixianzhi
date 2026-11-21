@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>试穿记录 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .hist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 16px var(--pad) 26px; }
+  .hcard {
+    position: relative;
+    border-radius: var(--r-md); overflow: hidden;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    aspect-ratio: .75;
+    background: var(--card);
+  }
+  .hcard .bg { position: absolute; inset: 0; }
+  .hcard .fit {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center; padding: 16%;
+  }
+  .hcard .fit img { max-width: 100%; max-height: 100%; }
+  .hcard .ck {
+    position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.92); border: 1.5px solid #d0d0cd;
+    display: none; place-content: center; font-size: 12px; font-weight: 900; color: #fff;
+  }
+  .editing .hcard .ck { display: grid; }
+  .hcard.sel .ck { background: var(--danger); border-color: var(--danger); }
+  .hcard.sel .ck::after { content: "✓"; }
+
+  .edit-pill {
+    border: 1.5px solid var(--line); background: var(--card);
+    color: var(--ink); padding: 10px 18px; min-height: 40px; border-radius: 999px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .del-bar {
+    position: sticky; bottom: calc(var(--nav-h) + 12px); z-index: 20;
+    margin: 0 var(--pad);
+    display: none;
+  }
+  .editing-bar .del-bar { display: block; }
+  .empty { text-align: center; color: var(--muted); padding: 90px 40px; font-size: 15px; line-height: 2; }
+
+  /* ---- iOS 图库式查看器 ---- */
+  .viewer {
+    position: fixed; inset: 0; z-index: 80;
+    background: #0c0c0e;
+    display: none; flex-direction: column;
+  }
+  .viewer.show { display: flex; }
+  .viewer .v-top {
+    display: flex; align-items: center;
+    padding: calc(12px + env(safe-area-inset-top)) var(--pad) 8px;
+  }
+  .viewer .v-top .iconbtn { background: rgba(255,255,255,.14); color: #fff; box-shadow: none; }
+  .viewer .v-main {
+    flex: 1; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px 20px;
+  }
+  .viewer .v-photo {
+    width: 100%; max-width: 340px; aspect-ratio: .75;
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .18s ease;
+  }
+  .viewer .v-photo img { max-width: 72%; max-height: 88%; }
+  .viewer .v-strip {
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 14px var(--pad) calc(24px + env(safe-area-inset-bottom));
+  }
+  .viewer .v-strip::-webkit-scrollbar { display: none; }
+  .vthumb {
+    flex: none; width: 52px; aspect-ratio: .75;
+    border-radius: 10px; overflow: hidden; position: relative;
+    cursor: pointer; opacity: .55;
+    border: 2px solid transparent;
+    transition: all .15s ease;
+  }
+  .vthumb.on { opacity: 1; border-color: #fff; }
+  .vthumb .bg { position: absolute; inset: 0; }
+  .vthumb img { position: absolute; inset: 14%; width: 72%; height: 72%; object-fit: contain; }
+</style>
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="history">
+<div class="app" id="appRoot">
+
+  <div class="pagehead" style="padding-top:14px">
+    <div>
+      <div class="h-display rise" style="font-size:28px">试穿记录</div>
+      <div class="section-note rise" id="countNote" style="margin-top:6px"></div>
+    </div>
+    <span class="grow"></span>
+    <button class="edit-pill rise" id="btnEdit">编辑</button>
+  </div>
+
+  <div class="hist-grid rise d1" id="grid"></div>
+
+  <div class="del-bar">
+    <button class="btn btn-primary btn-block" id="btnDel" style="background:var(--danger)">删除所选（0）</button>
+  </div>
+</div>
+
+<!-- 图库查看器 -->
+<div class="viewer" id="viewer">
+  <div class="v-top">
+    <button class="iconbtn" onclick="closeViewer()" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="v-main"><div class="v-photo" id="vPhoto"></div></div>
+  <div class="v-strip" id="vStrip"></div>
+</div>
+
+
+
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/history.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>

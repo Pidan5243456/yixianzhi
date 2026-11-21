@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>我的 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .user-row { display: flex; align-items: center; gap: 16px; padding: 18px 24px 8px; }
+  .avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 900;
+    border: 3px solid #fff; box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .uname { font-size: 21px; font-weight: 900; }
+  .usub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+  .seg { display: flex; gap: 24px; padding: 22px 24px 0; }
+  .seg button {
+    border: none; background: none; cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 17px; font-weight: 800; color: var(--muted);
+    padding: 0 0 10px; position: relative;
+  }
+  .seg button.on { color: var(--ink); }
+  .seg button.on::after {
+    content: ""; position: absolute; left: 50%; transform: translateX(-50%); bottom: 0;
+    width: 26px; height: 3.5px; border-radius: 2px; background: var(--ink);
+  }
+
+  /* 收藏卡片：与首页搭配卡同款 */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 18px var(--pad) 26px; }
+  .ocard {
+    min-width: 0;
+    background: var(--card); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card);
+    padding: 14px; position: relative; cursor: pointer;
+  }
+  .collage { position: relative; display: grid; grid-template-columns: 1.3fr 1fr; gap: 6px; align-items: center; min-height: 128px; }
+  .collage .ocover { aspect-ratio: auto; object-fit: cover; height: 100%; }
+  .collage img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+  .collage .side { display: flex; flex-direction: column; gap: 2px; }
+  .collage .side img { aspect-ratio: 1.1; }
+  .ocard .ofoot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .ocard .star {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid var(--ink); background: var(--card);
+    font-size: 15px; cursor: pointer; color: #101012;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .try-pill {
+    flex: 1; margin-left: 12px; white-space: nowrap;
+    border: none; background: var(--ink); color: #fff;
+    padding: 9px 18px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+
+  /* 我的模特 */
+  .model-stage { padding: 18px 24px 8px; }
+  .model-card {
+    position: relative;
+    background: var(--grad-soft);
+    border-radius: var(--r-xl);
+    aspect-ratio: .8;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .model-card img { max-height: 88%; max-width: 80%; object-fit: contain; }
+  .model-card .del {
+    position: absolute; right: 14px; bottom: 14px;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,.92);
+    font-size: 16px; cursor: pointer; box-shadow: var(--shadow-card);
+  }
+  .model-name { text-align: center; font-size: 14px; font-weight: 700; color: var(--ink-2); margin-top: 12px; }
+  .model-strip { display: flex; gap: 12px; padding: 18px 24px 26px; overflow-x: auto; scrollbar-width: none; }
+  .model-strip::-webkit-scrollbar { display: none; }
+  .mthumb {
+    flex: none; width: 76px; height: 100px;
+    border-radius: var(--r-md); background: var(--fill);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font-size: 12.5px; font-weight: 700; color: var(--ink-2);
+    cursor: pointer; border: 2px solid transparent;
+    overflow: hidden;
+  }
+  .mthumb.on { border-color: var(--ink); background: #fff; }
+  .mthumb img { width: 100%; height: 100%; object-fit: cover; }
+  .mthumb.add { border: 1.5px dashed #cfcfcc; background: none; font-size: 20px; }
+  .empty { text-align: center; color: var(--muted); padding: 70px 40px; font-size: 14.5px; line-height: 2; grid-column: 1/-1; }
+</style>
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="profile">
+<div class="app">
+
+  <div class="user-row">
+    <div class="avatar rise" id="avatar">我</div>
+    <div class="rise d1">
+      <div class="uname" id="uname">我的账号</div>
+      <div class="usub" id="usub"></div>
+    </div>
+    <span class="grow"></span>
+    <button class="iconbtn rise d1" style="font-size:23px" onclick="AppNav.go('settings.html')" aria-label="设置"><span data-icon="settings"></span></button>
+  </div>
+
+  <div class="seg rise d2">
+    <button class="on" data-tab="fav">我的收藏</button>
+    <button data-tab="model">我的模特</button>
+  </div>
+
+  <div id="tabFav">
+    <div class="grid2" id="favGrid"></div>
+  </div>
+
+  <div id="tabModel" class="hidden">
+    <div class="model-stage">
+      <div class="model-card" id="modelCard"></div>
+      <div class="model-name" id="modelName"></div>
+    </div>
+    <div class="model-strip" id="modelStrip"></div>
+  </div>
+</div>
+
+
+
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/profile.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>

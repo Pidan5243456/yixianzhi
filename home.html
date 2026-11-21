@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>首页 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .home-head { display: flex; align-items: center; padding: 10px var(--pad) 6px; }
+
+  .sec-head { display: flex; align-items: baseline; padding: 12px var(--pad) 12px; gap: 10px; }
+
+  /* 搭配卡网格：只展示图片 + 左下收藏 / 右下试穿 */
+  .outfits { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 var(--pad) 26px; }
+  .ocard {
+    min-width: 0;
+    background: var(--card); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card);
+    padding: 14px; position: relative; cursor: pointer;
+  }
+  .collage { position: relative; display: grid; grid-template-columns: 1.3fr 1fr; gap: 6px; align-items: center; min-height: 128px; }
+  .collage .ocover { aspect-ratio: auto; object-fit: cover; height: 100%; }
+  .collage img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+  .collage .side { display: flex; flex-direction: column; gap: 2px; }
+  .collage .side img { aspect-ratio: 1.1; }
+  .ocard .ofoot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .ocard .star {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid var(--line); background: var(--card);
+    font-size: 15px; cursor: pointer; color: #c9c9c6;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .ocard .star.on { color: #101012; border-color: var(--ink); }
+  .try-pill {
+    flex: 1; margin-left: 12px; white-space: nowrap;
+    border: none; background: var(--ink); color: #fff;
+    padding: 9px 18px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+</style>
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="home">
+<div class="app">
+
+  <div class="home-head">
+    <div class="rise"><div class="brand">衣先<em>知</em></div></div><a class="head-mark" href="create-model.html" aria-label="我的试衣模特"><span data-icon="user"></span></a>
+  </div>
+
+  <div class="sec-head rise d1">
+    <span class="section-title">我的穿搭</span>
+  </div>
+
+  <div class="product-actions home-modes"><button class="btn btn-primary" id="showMine">我的穿搭</button><button class="btn btn-ghost" id="showExamples">灵感示例</button><a class="btn btn-ghost" href="tryon.html">＋ 新建</a></div>
+  <div class="chips rise d1" id="sceneChips" style="padding-bottom:14px"></div>
+
+  <div class="collection-head"><h2 id="outfitSection">已保存</h2><span id="outfitCount"></span></div>
+  <div class="outfits rise d2" id="outfitGrid"></div>
+</div>
+
+
+
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/home.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>

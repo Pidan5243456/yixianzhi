@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">衣先知</string>
+    <string name="title_activity_main">衣先知</string>
+    <string name="package_name">com.yixianzhi.app</string>
+    <string name="custom_url_scheme">com.yixianzhi.app</string>
+</resources>

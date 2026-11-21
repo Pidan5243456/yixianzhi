@@ -1,0 +1,12 @@
+.git
+node_modules
+www
+.tooling
+artifacts
+android
+documents
+tests
+server/.env
+server/data
+**/*.apk
+**/*.jks

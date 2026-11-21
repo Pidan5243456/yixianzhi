@@ -1,0 +1,14 @@
+services:
+  yixianzhi:
+    build: .
+    env_file: server/.env
+    environment:
+      NODE_ENV: production
+      DATA_DIR: /app/server/data
+    ports:
+      - "127.0.0.1:8394:8394"
+    volumes:
+      - yixianzhi_data:/app/server/data
+    restart: unless-stopped
+volumes:
+  yixianzhi_data:

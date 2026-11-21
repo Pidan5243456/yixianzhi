@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>穿搭详情 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .hero {
+    position: relative;
+    margin: 6px var(--pad) 0;
+    background: var(--card);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-card);
+    padding: 24px;
+    min-height: 300px;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; align-items: center;
+  }
+  .hero img { width: 100%; object-fit: contain; }
+  .hero .main img { aspect-ratio: .8; }
+  .hero .side { display: flex; flex-direction: column; gap: 8px; }
+  .hero .side img { aspect-ratio: 1.1; }
+  .hero .ocover { border-radius: var(--r-xl); aspect-ratio: auto; object-fit: cover; height: 100%; }
+
+  /* 替换玩法提示：轻量灰字，不抢大图版面 */
+  .swap-hint {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 12.5px; color: var(--muted);
+    margin-top: 12px;
+  }
+  .pieces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px var(--pad); }
+  .piece {
+    background: var(--card); border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+    padding: 12px; cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color .15s ease;
+  }
+  .piece:active { border-color: var(--ink); }
+  .piece img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+
+  .detail-foot {
+    position: sticky; bottom: 0;
+    padding: 14px var(--pad) calc(20px + env(safe-area-inset-bottom));
+    background: linear-gradient(transparent, var(--bg) 40%);
+    display: flex; gap: 12px;
+  }
+
+  /* 替换弹窗：网格内部滚动，确认栏固定白底在最上层 */
+  #sheetSwap {
+    display: flex; flex-direction: column;
+    padding-bottom: 0;
+    height: 72dvh;
+  }
+  .swap-grid {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    align-content: start;
+    padding-bottom: 10px;
+  }
+  .swap-cell {
+    min-width: 0;
+    background: var(--fill); border-radius: var(--r-md);
+    aspect-ratio: .9; padding: 14px; cursor: pointer;
+    border: 2.5px solid transparent;
+  }
+  .swap-cell.on { border-color: var(--ink); background: #fff; }
+  .swap-cell img { width: 100%; height: 100%; object-fit: contain; }
+  .swap-foot {
+    flex: none;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    padding: 12px 0 calc(18px + env(safe-area-inset-bottom));
+    margin: 0 -24px;            /* 白底左右铺满 sheet */
+    padding-left: 24px; padding-right: 24px;
+    position: relative; z-index: 2;
+  }
+</style>
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="outfit-detail">
+<div class="app">
+
+  <div class="pagehead">
+    <button class="iconbtn" onclick="history.length > 1 ? AppNav.back() : AppNav.go('home.html')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 8 12l6.5 7"/></svg></button>
+  </div>
+
+  <div class="scroll-body">
+    <div class="hero rise" id="hero"></div>
+    <p class="swap-hint rise d1">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14-3.5L20 8"/><path d="M20 3v5h-5"/><path d="M20 15a8 8 0 0 1-14 3.5L4 16"/><path d="M4 21v-5h5"/></svg>
+      轻点图中单品，可替换成同类款
+    </p>
+    <h2 class="pieces-label">穿搭单品</h2>
+    <div class="pieces rise d1" id="pieces"></div>
+  </div>
+
+  <div class="detail-foot">
+    <button class="btn btn-ghost" style="flex:1" id="btnFav2">★ 收藏</button>
+    <button class="btn btn-primary" style="flex:2" id="btnTry">试穿</button>
+  </div>
+</div>
+
+<!-- 替换单品 Sheet -->
+<div class="sheet-mask" id="mask-sheetSwap" onclick="closeSheet('sheetSwap')"></div>
+<div class="sheet" id="sheetSwap">
+  <div class="sheet-grab"></div>
+  <div class="sheet-title" id="swapTitle">替换
+    <button class="sheet-x" onclick="closeSheet('sheetSwap')" aria-label="关闭"><span data-icon="x"></span></button>
+  </div>
+  <div class="swap-grid" id="swapGrid"></div>
+  <div class="swap-foot">
+    <button class="btn btn-primary btn-block" id="btnSwapOk">确认</button>
+  </div>
+</div>
+
+
+
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/outfit-detail.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>

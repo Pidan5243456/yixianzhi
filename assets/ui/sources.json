@@ -1,0 +1,209 @@
+{
+  "retrievedAt": "2026-11-21T18:38:25.9744710+08:00",
+  "tablerRevision": "85e870dbe8680c2d6deefd062122d30ef1544a41",
+  "assets": [
+    {
+      "file": "tabler-LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/LICENSE",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "B740A1D46122672DA62833E97F7E7C8A13FA85CBC7445B584B297CC00DDE93DB"
+    },
+    {
+      "file": "home.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/home.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "069600F461F3E967685765723A851AF7B35F24B715E03D41A2928152CF75644C"
+    },
+    {
+      "file": "hanger.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/hanger.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "D4C58EC6F652F7EEFB6F6F7BD758F83803FDCDB4B3EBD5CE60286CD32BA2D19D"
+    },
+    {
+      "file": "photo.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/photo.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "67D9B3EC02867E98AD17739380919A2D82287D15D3463161F450E17047ED319B"
+    },
+    {
+      "file": "camera.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/camera.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "A87EAE819B9C5A98B07E635C5A52FD2AAED392000CE62BB8724CD5F5BABA4BC7"
+    },
+    {
+      "file": "world.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/world.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "D0DFC538F966D03B72A9FE872FBB567D5E84DB9D24B95AF032305404EF71F587"
+    },
+    {
+      "file": "mail.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/mail.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "94CA7EED1A9B89C7D3345E7C62A622060A502645B4AE10B7ED160294583D3C33"
+    },
+    {
+      "file": "copy.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/copy.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "3A455A299DB4EC939FD0473D15C81C1D3F30F65DEC81A7DE816317C989B06073"
+    },
+    {
+      "file": "chevron-left.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/chevron-left.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "889174801CA4213379FE4E6A574546793A72AB22BE35BC2F177E3D8D24576DBD"
+    },
+    {
+      "file": "chevron-down.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/chevron-down.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "5A2E5C2A155CE06264A3F7299073ED636142DFD0B324B747387D9CFBF9FB5E3E"
+    },
+    {
+      "file": "chevron-right.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/chevron-right.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "83733BB6E03E1D20FD2674D06A493642C8EA6EEF76C44EBB2239B9EF17DEDFF7"
+    },
+    {
+      "file": "x.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/x.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "9350785360414C39450C3505F17D1745E55A7534EDACE8548E30CF49E3727D43"
+    },
+    {
+      "file": "plus.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/plus.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "9CC497D4CC1EB38CF9DAAE18F41FFDC1A5E2A8431D70247B0854978F303F28D6"
+    },
+    {
+      "file": "star.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/star.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "C0B4AFC60D311585F7C79C2FFD68D58EB5C1E3A3CD6D626CDC7792C5D3BBB49B"
+    },
+    {
+      "file": "sparkles.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/sparkles.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "FB229226D919DDDDC8C09D3269B748F437B5F0DD46072209CB8F3046E84B38FE"
+    },
+    {
+      "file": "briefcase.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/briefcase.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "66FB45DD412E45AD436BB88702C047C3BF883BA4B4C6859AE140FB6A3599130B"
+    },
+    {
+      "file": "heart.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/heart.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "332BE1C5C3A67DF766C69DA053A0EB29A11AA74A262F4422B82BCEAAF098B1E8"
+    },
+    {
+      "file": "luggage.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/luggage.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "4F95B9D0328B92A7A322B842EDA037C5A569CB80B21B6A27FBE3F6C87F1E5357"
+    },
+    {
+      "file": "coffee.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/coffee.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "755728C2EE5189F2F06D295EDF1D64C816E4065BECF657E36EEE8B7811226FCE"
+    },
+    {
+      "file": "user.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/user.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "63554429F551522EA578A9BF72D1D350BD0FFDB8EDE3AF92A05E92D71CAB6B9C"
+    },
+    {
+      "file": "settings.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/settings.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "EF9CF42D822C00B4FAD5BC5EECEDDD4E1EC3774BB7DDD09891D0FBA274BC3E95"
+    },
+    {
+      "file": "trash.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/trash.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "4B90FA07A6D980736951D9E83B91432972B2BCECF81BE4578608A0983F2EBC9D"
+    },
+    {
+      "file": "shirt.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/shirt.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "EF988788499B726D3A5B2744A8242AEFD64C8801C32016239B138379C788771A"
+    },
+    {
+      "file": "shoe.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/shoe.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "59548A241723209FD41D0640F4FB1CDED4FB81A03C1C3190EA2893E37749847B"
+    },
+    {
+      "file": "layout-grid.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/layout-grid.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "91F923BCCA6E9201CCEDD2A10BB5D5A7EB3DBB5FA5A26AF394D362F35C935237"
+    },
+    {
+      "file": "arrows-shuffle.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/arrows-shuffle.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "D17D782777733BB584C28D5B29C91C643F6749C5C7261BE450E45A5E8C2D72AF"
+    },
+    {
+      "file": "check.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/check.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "E206067A7D570997B5B3A7D30AB287C0B15A492787649A8B96DFF8FAD2862FBE"
+    },
+    {
+      "file": "arrow-up-right.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/arrow-up-right.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "B7D952B0B6FBD089B110D85639FFFFC001BB41FE53040E5E7F3E3F65DDC22595"
+    },
+    {
+      "file": "shield-check.svg",
+      "source": "https://raw.githubusercontent.com/tabler/tabler-icons/85e870dbe8680c2d6deefd062122d30ef1544a41/icons/outline/shield-check.svg",
+      "license": "MIT",
+      "credit": "Paweł Kuna",
+      "sha256": "7D12A28BB5B8BA69445A94118AA96B57A513F8D45E23974665F25C597EACCC30"
+    }
+  ]
+}

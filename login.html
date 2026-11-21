@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>登录 · 衣先知</title>
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .login-body { flex: 1; display: flex; flex-direction: column; padding: 0 32px; }
+  .applogo {
+    width: 92px; height: 92px; border-radius: 26px;
+    background: var(--ink); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 25px; font-weight: 900; line-height: 1.1; white-space: nowrap;
+    text-align: center; letter-spacing: .02em;
+    margin: 96px auto 20px;
+    box-shadow: var(--shadow-float);
+  }
+  .applogo em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .appname { font-size: 30px; font-weight: 900; text-align: center; }
+  .login-tip { font-size: 13px; color: var(--muted); text-align: center; margin: 10px 0 42px; }
+  .login-foot { padding: 26px 32px calc(30px + env(safe-area-inset-bottom)); }
+</style>
+<link rel="stylesheet" href="css/prototype.css">
+<script src="js/build-config.js"></script>
+<script src="js/runtime.js"></script>
+<script src="js/persistence.js"></script>
+</head>
+<body data-page="login">
+<div class="app">
+
+  <div class="login-body">
+    <div class="applogo"><span data-icon="hanger"></span></div>
+    <h1 class="appname">衣先知</h1>
+    <div class="login-tip rise d1">邮箱验证码登录，未注册将自动创建账号</div>
+
+    <div class="field rise d2" style="margin-bottom:14px">
+      <input type="email" id="email" placeholder="请输入邮箱地址" autocomplete="email">
+    </div>
+    <div class="field rise d2" style="margin-bottom:22px">
+      <input type="tel" id="code" maxlength="6" placeholder="请输入邮箱验证码" inputmode="numeric">
+      <button class="field-act" id="btnSend">获取验证码</button>
+    </div>
+    <button class="btn btn-primary btn-block rise d3" id="btnLogin" disabled>登录</button>
+  </div>
+
+  <a class="connection-link" href="connection.html" style="text-align:center;margin-top:20px;color:var(--ink-2)">服务连接 / 本地演示</a>
+  <div class="login-foot rise d4">
+    <label class="agree">
+      <input type="checkbox" class="checkbox" id="agreeChk">
+      <span>我已阅读并同意 <a href="javascript:;">用户协议</a> 和 <a href="javascript:;">隐私政策</a>，邮箱仅用于账号登录，不会对外泄露</span>
+    </label>
+  </div>
+</div>
+
+
+
+
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/login.js"]</script>
+<script src="js/bootstrap.js" defer></script>
+</body>
+</html>
