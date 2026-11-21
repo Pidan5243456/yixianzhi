@@ -1,71 +1,62 @@
 # HTTP 接口契约
 
-更新：2026-11-21。现行路由来源：[server.js](../../server/server.js)、[auth.js](../../server/auth.js)。新增协议不在本文现行接口表中冒充已提供能力。
+更新：2026-11-21。实现来源：[路由](../../server/server.js)、[认证](../../server/auth.js)。
 
 ## 通用约定
 
-请求和响应使用 JSON。除健康检查、验证码、登录、埋点以及单独管理员鉴权外，均要求 `Authorization: Bearer <token>`。身份来自服务端验证的令牌，不接受请求体指定 owner。
+JSON 请求/响应，最大 30 MiB。用户接口要求 Authorization: Bearer <token>；验证码登录、健康检查例外。注销验证码发送仍需当前会话。身份来自令牌，不能指定 owner。API 响应不缓存。
 
-失败响应基本为 `{ "error": "可展示的信息" }`；同步 409 另带当前 `version`。目前没有统一业务错误码协议，新网关的 code 还未完整透传。413 表示请求/图片大小超限，429 表示限流或配额，503 表示配置或服务不可用。
+错误为 {error,code?}；400 参数错误，401 会话失效，403 未授权，409 幂等或重试冲突，410 输入/图片过期，413 大小或容量限制，426 客户端需升级，429 次数/预算/并发限制，503 服务未配置。实体 CAS 冲突作为 push 结果逐条返回。
 
-Express JSON 上限 30 MiB。允许的 origin 包括 APK 的 `https://localhost`、`http://localhost` 及 `ALLOWED_ORIGINS`；CORS 不是鉴权措施。API 响应不缓存。
+## 已接入路由
 
-## 当前已挂载路由
-
-| 方法与路径 | 输入 | 主要输出及限制 |
+| 方法与路径 | 输入 | 响应/约束 |
 |---|---|---|
-| GET `/api/health` | 无 | `ok,service,syncVersion,demo,aiReady`；当前 syncVersion=1，aiReady 仅检查两项密钥存在 |
-| POST `/api/auth/send-code` | `email` | `{ok:true}`；开发演示条件满足时另有 devCode |
-| POST `/api/auth/login` | `email,code` | `{email,token}`；验证码单次消费 |
-| POST `/api/state/pull` | `{}` | `{state,version,schemaVersion:1}`；有快照时另有 dataVersion、updatedAt |
-| POST `/api/state/push` | `schemaVersion:1,expectedVersion,state` | `{ok,version,schemaVersion:1,dataVersion:2,updatedAt}`；版本冲突 409 |
-| POST `/api/segment/start` | `image,requestId` | `{jobId}`；requestId 为 8～100 位字母/数字/下划线/连字符 |
-| POST `/api/segment/result` | `jobId,got?` | `status,error?,targets`；got 是已取得结果的目标序号数组 |
-| POST `/api/segment/retry` | `jobId,index` | `{ok}`；输入过期 410；他人任务 404 |
-| GET `/api/segment/jobs` | 无 | `{jobs:[{jobId,status,ts}]}`，只含当前账号 |
-| POST `/api/segment` | `image` | 旧同步拆图返回；保留兼容，不是当前主要入口 |
-| POST `/api/detect` | `image` | 识别目标 `items`；旧兼容接口 |
-| POST `/api/segment-one` | `image,target` | 单个处理结果 `item`；旧兼容接口 |
-| POST `/api/validate-photo` | `image` | `pass,fail_reasons,primary_reason` 等；页面不再自动调用 |
-| POST `/api/recommend` | `wardrobe,around?` | `{items:[id],reason}`；规则回退可能带 fallback；候选最多 1000 |
-| POST `/api/tryon` | `modelImage,items` | `{image}`；items 为 1～4 个 `{id,category,image}` |
-| POST `/api/track` | `event,session_id,page,props` | `{ok:true}`；当前允许匿名，尚未接入服务端统计授权 |
-| GET `/api/admin/stats` | `token,days?` 查询参数 | 管理统计；要求 ADMIN_TOKEN；当前查询令牌方式待改为请求头 |
+| GET /api/health | 无 | ok,service=yixianzhi,syncVersion=2,dataVersion=2,demo,aiReady |
+| POST /api/auth/send-code | email,purpose=login 或 delete | ok；delete 须登录；非生产演示可返回 devCode |
+| POST /api/auth/login | email,code | email,token,generation；验证码单次消费 |
+| POST /api/auth/logout | {} | 撤销当前会话 |
+| POST /api/account/delete | confirm=DELETE,code | 注销专用验证码；成功后本机清理 |
+| GET /api/consents | 无 | ai_processing,analytics |
+| POST /api/consents | purpose,granted:boolean | purpose,granted,version |
+| POST /api/media/upload | image:data URL | ref:media:<sha256>；单张 3 MiB |
+| GET /api/media/:id | SHA-256 路径参数 | dataUrl；账号归属检查 |
+| POST /api/media/collect | {} | deleted 数量 |
+| POST /api/sync/pull | cursor?,watermark?,limit? | entities,cursor,watermark,hasMore,syncVersion |
+| POST /api/sync/push | mutationId,changes | 每条 status=ok/conflict 与 current；批次最多 100 |
+| POST /api/ai/operations | kind,input,actionId,retry? | HTTP 202，operationId,kind,status,updatedAt 及完成结果 |
+| GET /api/ai/operations | 无 | 当前账号最近 100 个 operations |
+| GET /api/ai/operations/:id | 操作 ID | 状态和完成结果；已删试穿返回 deleted |
+| POST /api/ai/operations/:id/retry | actionId | 显式重试，HTTP 202；保留原 ID |
+| POST /api/segment/start | image,requestId,actionId,retry? | jobId；图片可为已上传引用 |
+| POST /api/segment/result | jobId,got? | status,error?,targets；got 为已取目标索引 |
+| POST /api/segment/retry | jobId,index,actionId | 操作状态；-1 整体/全部失败项，非负为指定目标 |
+| GET /api/segment/jobs | 无 | jobs；当前账号未完成/有失败任务 |
+| POST /api/track | event,session_id,page,props | 匿名或无统计授权时忽略 |
+| GET /api/admin/stats | days? | 管理员 Bearer ADMIN_TOKEN，最多 30 日 |
 
-直接 AI 路由仍在统一网关接入中，挂载不等于配置密钥后即可完整工作。健康检查 aiReady 也不表示已取得授权、预算可用或真实模型联调通过。
+aiReady 只反映模型密钥存在，不证明预算、授权或真实供应商可用。CORS 允许 APK localhost origin 和 ALLOWED_ORIGINS；CORS 不代替鉴权。
 
-## 快照同步示例
+## 同步结构
 
-```json
-{
-  "schemaVersion": 1,
-  "expectedVersion": 0,
-  "state": {
-    "dataVersion": 2,
-    "account": {"nick": "小衣", "avatar": ""},
-    "customItems": [],
-    "customOutfits": [],
-    "favorites": [],
-    "models": [],
-    "history": []
-  }
-}
-```
+push 的 changes 项是 {kind,id,data,deleted,expectedVersion}。列表 kind 为 customItems/customOutfits/models/history；成员为 favorites/wardrobe/deletedItems/processedSegmentTargets，data=true；设置 kind=setting，id 为 account/profile/onboarded/privacyOk/curModel/historySeeded。
 
-未出现的列表字段由服务端补空；不能用这个示例更新已有账号而期待未传字段自动保留。它是完整替换快照接口。account 中的 token/email 会被剔除，模型密钥不能传入。
+账号只同步 nick/avatar。实体最多 64,000 字节；主要列表最多 1000，自配搭配含 1～4 个唯一 ID、名称最多 80 字符。图片必须先上传，仅指定图片字段可用 media 引用。
 
-图片只允许指定路径中的 PNG/JPEG/WebP data URL，单张解码后不超过 3 MiB。当前客户端不能传入内部 `media:` 引用。主要列表最多 1000，processedSegmentTargets 最多 10000；自配搭配 1～4 个唯一衣物 ID，名称最多 80 字符。
+响应 results 每项为 {key,status,current}；current 包含 kind,id,data,version,deleted。客户端不得把 push 回执当作 pull 游标。分页语义与媒体宽限见 [M4](../modules/m4-sync.md)。
 
-`expectedVersion` 是当前账号快照版本；不是产品版本、dataVersion 或数据库迁移号。对于已有 dataVersion=2 的快照，旧业务版本写入返回 426。整份冲突选择机制见 [M4](../modules/m4-sync.md)。
+旧 /api/state/pull、push 仅供未迁移快照使用，首次 v2 同步原子迁移后返回 426。不要混用两套写协议。
 
-## 拆图查询
+## AI 动作幂等
 
-任务状态由 jobs 模块维护；目标 state 为 pending/running/done/fail。已完成目标可带 item；客户端通过 got 只取尚未落库的结果。目标 ID 使用 `c_<jobId>_<index>`，避免丢回执后重复新增。
+每次明确点击生成、整理或重试创建 actionId（8～100 位字母/数字/下划线/连字符）。客户端发请求前保存编号，同次重传必须复用编号和请求体。服务端在同一事务内绑定动作、任务及次数；动作回执没有 TTL，账号注销时清理。
 
-当前目标结果保留逻辑与新的 ai_operations 状态尚有收尾差异；不能将 jobs 的 done 理解成所有子项成功。含 fail 子项时应展示逐件错误。
+重复动作始终返回已绑定任务，不因任务失败或结果被删除启动下一轮。用户重新点击且原试穿已删时，由服务端创建后继任务并保留原墓碑；查询与旧 POST 不走此分支。过期任务按 ID 重试返回 410，重新选择完整输入后可明确确认 retry:true，保留原操作累计上限。
 
-## 待实现接口领域
+## AI 输入与结果
 
-独立授权查询/授予/撤回、通用 AI 操作提交/查询/主动重试、逐实体增量拉取/推送、独立图片上传/读取、服务端退出和账号注销。具体协议需实施后更新此表；现在调用这些新增路径会得到 404。
+TRYON：modelImage,modelId,outfitId?,scene?,items:[{id,category,image}]；RECOMMEND：wardrobe:[{id,category,name,custom,gender,labels}],around?；VALIDATE：image。模型/提示词由服务端控制。
 
-目标约束分别见 [M0](../modules/m0-system.md)、[M3](../modules/m3-ai.md)、[M4](../modules/m4-sync.md)。数据库结构见 [数据字典](database.md)。
+试穿 done 返回 image 引用、record 与 mock；推荐返回 items/reason；质检返回 pass 等。SPLIT 由 segment/start 创建，目标 state 为 pending/running/done/fail，稳定衣物 ID 为 c_<jobId>_<index>。父任务 done 不表示所有目标都成功，客户端展示逐件失败。
+
+旧 /api/segment、detect、segment-one、validate-photo、recommend、tryon 已封闭供应商路径，配置满足时返回 426，缺配置时可返回 503。不能绕过任务、授权和预算。

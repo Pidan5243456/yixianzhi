@@ -1,78 +1,58 @@
 # 数据库与数据字典
 
-更新：2026-11-21。来源：[database.js](../../server/database.js)、[state.js](../../server/state.js)。**已有表不代表对应功能已接入。**
+更新：2026-11-21。SQLite user_version=4；同步 syncVersion=2；业务 dataVersion=2。三个版本独立。来源：[database.js](../../server/database.js)。
 
 ## 存储布局
 
-```text
-DATA_DIR/                       默认 server/data，生产须持久化
-  yixianzhi.sqlite              元数据、快照、任务、费用
-  yixianzhi.sqlite-wal / -shm   SQLite 工作文件，运行时可能存在
-  media/<账号SHA256>/<图片SHA256>  私有图片字节，无公开静态 URL
-```
+DATA_DIR 默认为 server/data，含 yixianzhi.sqlite、运行时 WAL/SHM、media/<账号SHA256>/<图片SHA256> 私有文件。客户端 IndexedDB v2 有 snapshots 和 media 两个仓库，图片以 Blob 保存。
 
-启用 WAL、外键检查、5 秒 busy timeout。`transaction()` 使用 `BEGIN IMMEDIATE`；应用按单进程设计，不能跨 await 持有同步事务。备份运行中的数据库不能仅复制主 sqlite 文件，必须使用一致快照或停服复制完整数据目录。
+启用 WAL、外键检查和 5 秒 busy timeout。同步事务使用 BEGIN IMMEDIATE，不跨 await。当前部署为单进程 SQLite，不能用多个实例共享此数据目录。在线备份需要一致快照；简单部署可停服备份整个目录。
 
-## 现行表
+## 表与用途
 
-| 表 | 主键与主要字段 | 运行用途 |
+| 表 | 主要键与字段 | 用途 |
 |---|---|---|
-| `users` | email PK；created_at、last_login_at | 当前账号身份；ensureUser 也会刷新 last_login_at，尚非严格登录审计 |
-| `user_state` | email PK/FK users；version、state、updated_at | 当前整账号 JSON 快照；媒体用引用替换 |
-| `media` | (owner,id) PK；owner FK users；mime、size、path | 图片归属和文件索引，size 为字节 |
-| `kv` | key PK；value JSON、expires_at | 验证码、限流、任务和幂等记录；0 表示无过期 |
-| `events` | id PK；ts、event、email、props | 当前埋点与后台统计；时间索引 events_time |
+| users | email PK,created_at,last_login_at | 身份索引；ensureUser 会更新 last_login_at，不是严格登录审计 |
+| accounts | email PK,generation,active | 活跃/冻结状态，阻断注销回调 |
+| account_generation | id 自增 PK | 同邮箱重建也分配新代次 |
+| sessions | hash PK,email,generation,expires_at | 随机令牌 SHA-256，30 天，可撤销 |
+| consents | (owner,purpose),version,granted,updated_at | AI 与统计独立授权 |
+| entities | (owner,kind,id),data,version,deleted | 衣物、搭配、模特、记录、成员和设置 |
+| changes | cursor 自增 PK,owner,kind,id,version,data,deleted | 增量日志；新写 data 为 NULL，拉取完整最新实体 |
+| mutations | (owner,id),request_hash,result | 推送幂等回执 |
+| sync_migrations | owner PK,source_version,migrated_at | 一次性旧快照迁移 |
+| user_state | email PK/FK,version,state,updated_at | 未迁移的旧快照；迁移后删除 |
+| media | (owner,id),mime,size,path | 私有图片索引及字节容量 |
+| media_age | (owner,id),created_at | 最近上传/返回引用的 24 小时宽限起点 |
+| ai_operations | id PK,owner,kind,fingerprint,status,result,error,created_at,updated_at,cycle | 持久操作，账号/功能/指纹唯一 |
+| operation_inputs | id PK,data,expires_at | 冻结输入和成功中间阶段，7 天恢复窗口 |
+| ai_usage | id PK,operation_id,owner,provider,model,budget_day,reserved,status,usage,started_at,finished_at | 每次尝试预留，未知结果不退款 |
+| kv | key PK,value,expires_at | 验证码摘要、限流、拆图元数据、子项、永久动作回执；0 表示不按 TTL 过期 |
+| events | id PK,ts,event,email,props | 有授权的使用统计 |
 
-`user_state` 当前业务字段：`dataVersion`、`customItems`、`customOutfits`、`models`、`history`、`favorites`、`wardrobe`、`deletedItems`、`profile`、`account`、`curModel`、`onboarded`、`privacyOk`、`historySeeded`、`processedSegmentTargets`。账号同步只保留 nick/avatar；pendingSegments、outfitDraft 和登录令牌不在同步白名单。
+外键仅对源码已声明的 users 关联表生效。entities、changes、sessions 等依靠服务层校验归属和删除顺序，不假称数据库已强制所有逻辑关系。索引覆盖账号变更游标、账号任务时间和日期费用。
 
-## v2/v3 表结构升级已创建的表
+## 业务实体
 
-SQLite 当前 `PRAGMA user_version=3`；客户端同步仍是 v1。
+| kind | data 摘要 |
+|---|---|
+| customItems | id,name,cat,scene,dataUrl:media引用,source,createdAt,updatedAt,labels? |
+| customOutfits | id,name,scene,items:衣物ID数组,createdAt,updatedAt |
+| models | id,name,dataUrl；默认模特可为 null |
+| history | id=h_<operationId>,operationId,modelId,outfitId?,items,scene,time,image,kind |
+| 收藏/衣橱示例等成员 | ID 为所属对象 ID，data=true |
+| setting | account 仅 nick/avatar；profile 与其他偏好开关 |
 
-| 表 | 主键与字段摘要 | 接入状态 |
-|---|---|---|
-| `consents` | (owner,purpose)；version、granted、updated_at；owner FK users | 函数已写，授权 API/UI 未接入 |
-| `ai_operations` | id；owner FK、kind、fingerprint、status、result、error、created_at、updated_at、cycle | 拆图部分使用，其他 AI 路由待统一 |
-| `ai_usage` | id；operation_id、owner、provider、model、budget_day、reserved、status、usage、started_at、finished_at | 网关已写，真实链路未完整验收 |
-| `entities` | (owner,kind,id)；data、version、deleted | 增量实体表，待接入 |
-| `changes` | cursor INTEGER AUTOINCREMENT；owner、kind、id、version、data、deleted | 有序变更日志，待接入 |
-| `sync_migrations` | owner；source_version、migrated_at | 一次性快照迁移标记，待接入 |
-| `mutations` | (owner,id)；request_hash、result | 推送幂等回执，待接入 |
-| `media_age` | (owner,id)；created_at | 媒体宽限，当前媒体服务函数内部使用 |
-| `accounts` | email；generation、active | 升级到数据库版本 3 时从 users 一次性补行；后续启动/注册不自动补行，注销隔离未接入 |
-| `sessions` | hash；email、generation、expires_at | 可撤销会话预留，当前 auth 未使用 |
-| `operation_inputs` | id；data、expires_at | AI 输入保留预留，尚未写入完整流程 |
+穿搭引用衣物 ID，删除衣物不抹去穿搭或历史；页面提示缺失。删除穿搭清理其收藏，保留生成历史。实体墓碑防旧设备及后台结果静默复活。
 
-`ai_operations` 有 `(owner,kind,fingerprint)` 唯一约束和 `(owner,created_at)` 索引；`ai_usage` 有 `(budget_day,owner)` 索引；`changes` 有 `(owner,cursor)` 索引。entities 等新增表尚未声明外键，归属与生命周期规则必须由待接入服务检查；不可把逻辑关系写成数据库已强制的约束。
+## 安全、留存与迁移
 
-## 逻辑关系（包含目标模型）
+图片 ID 为原字节 SHA-256；哈希不是访问凭证。图片查询和引用均检查 owner。数据库不存模型密钥；验证码存 HMAC 摘要；会话原令牌只在客户端账号分区，云端实体与备份剔除它。
 
-```mermaid
-erDiagram
-  USER ||--o{ GARMENT : owns
-  USER ||--o{ OUTFIT : saves
-  USER ||--o{ MODEL : selects
-  USER ||--o{ TRYON_RECORD : keeps
-  OUTFIT }o--o{ GARMENT : references_ids
-  TRYON_RECORD }o--o| OUTFIT : optional_reference
-  GARMENT }o--|| MEDIA : image
-  MODEL }o--o| MEDIA : photo
-  TRYON_RECORD }o--|| MEDIA : result
-  USER ||--o{ AI_OPERATION : requests
-  AI_OPERATION ||--o{ AI_USAGE : attempts
-```
+用户旧表时间主要为 ISO 文本；任务/授权等使用毫秒。费用为整数 micro USD，budget_day 为 UTC 日期。输入过期表示不再支持旧任务恢复，元数据并不立刻物理删除；媒体回收不再将过期输入当作活引用。
 
-GARMENT/OUTFIT 等是业务实体名称，目前主要存在快照 JSON 中，不是已建同名关系表。衣物删除不级联删除搭配或历史图片；搭配中的失效 ID 用于提示缺失。v2 通过实体墓碑防止旧设备恢复已删除数据。
+注销先提交冻结，再清理实体、任务、媒体、会话和授权；失败保留冻结并重试。费用匿名化保留全站累计，不保留已注销邮箱。账号代次序列不重置。
 
-## 媒体、时间与费用约定
+升级按版本事务迁移，未来版本拒绝启动。生产升级应先备份，在副本验证迁移/恢复；不得降低 user_version 强行回滚。
 
-- media.id 为图片原始字节 SHA-256，不是 URL 哈希；读写始终校验 owner。
-- `users`、`user_state`、`events.ts` 使用 ISO 时间字符串；新增任务/授权表使用毫秒时间戳，API 转换要明确。
-- `budget_day` 是 UTC 日期；`reserved` 为整数 micro USD，不能使用浮点金额。
-- 模型密钥放环境配置；验证码存 HMAC 摘要；当前客户端 token 存本机账号状态，不写入云端快照或导出。
-
-## 升级与运维约束
-
-表结构迁移在事务内执行，遇到比代码更新的 user_version 会拒绝启动。生产升级前备份数据库和媒体并在副本验证迁移；不降低版本号以强行运行旧代码。
-
-当前 v1 未提供完整账号注销、媒体回收与任务留存清理。v2 迁移和删除顺序见 [M4](../modules/m4-sync.md)，不能通过手工清空个别表替代。
+媒体和备份细节见 [M4](../modules/m4-sync.md)，费用见 [M3](../modules/m3-ai.md)。

@@ -111,23 +111,9 @@
     openSheet("sheetEdit");
   }
 
-  /* 隐私协议授权开关：关闭需确认；演示阶段仅保存状态，不实际拦截功能 */
-  const sw = $("#swPrivacy");
-  sw.checked = Store.get().privacyOk !== false;
-  sw.addEventListener("change", () => {
-    if (!sw.checked) {
-      sw.checked = true;               // 先弹确认，确认后再真正关闭
-      openModal("modalPrivacy");
-    } else {
-      Store.set({ privacyOk: true });
-      savedToast("已开启隐私协议授权");
-    }
-  });
-  function confirmPrivacyOff() {
-    Store.set({ privacyOk: false });
-    $("#swPrivacy").checked = false;
-    closeModal("modalPrivacy");
-    savedToast("已关闭隐私协议授权");
-  }
-
+  const sw=$('#swPrivacy'),analytics=$('#swAnalytics');
+  async function refreshConsent(){try{const data=await Consent.state();sw.checked=data.ai_processing;analytics.checked=data.analytics;}catch(e){sw.checked=false;analytics.checked=false;toast(e.message);}}
+  sw.addEventListener('change',async()=>{const granted=sw.checked;sw.disabled=true;try{if(granted){await Consent.ensure();}else if(confirm('关闭后将停止新的 AI 调用，已完成的结果仍可查看。确定关闭？'))await Consent.set('ai_processing',false);}catch(e){if(!e.handled)toast(e.message);}finally{await refreshConsent();sw.disabled=false;}});
+  analytics.addEventListener('change',async()=>{analytics.disabled=true;try{await Consent.set('analytics',analytics.checked);}catch(e){toast(e.message);}finally{await refreshConsent();analytics.disabled=false;}});
+  refreshConsent();
   renderRows();

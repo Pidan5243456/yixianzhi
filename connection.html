@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>服务连接 · 衣先知</title><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/prototype.css">
-<script src="js/build-config.js"></script><script src="js/runtime.js"></script><script src="js/persistence.js"></script>
+<script src="js/build-config.js"></script><script src="js/runtime.js"></script><script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="connection"><main class="app"><div class="pagehead"><a class="iconbtn" href="login.html">‹</a><h1 style="font-size:24px">服务连接</h1></div>
 <div style="padding:24px 16px"><p style="line-height:1.8;color:var(--ink-2)">连接你的衣先知服务后，可使用邮箱登录、AI 和云端同步。地址由服务部署者提供。</p>
@@ -14,7 +14,7 @@
 <div id="conflictActions" hidden><p style="margin-top:12px">两端资料有冲突。选择前会保留本机备份。</p><button id="useCloud" class="btn btn-ghost btn-block" style="margin-top:12px">使用云端版本</button><button id="useLocal" class="btn btn-ghost btn-block" style="margin-top:12px">用本机版本覆盖云端</button></div>
 <button id="export" class="btn btn-ghost btn-block" style="margin-top:12px">导出本机资料</button>
 <button id="import" class="btn btn-ghost btn-block" style="margin-top:12px">导入备份资料</button>
-<input id="backupFile" type="file" accept="application/json,.json" hidden>
+<input id="backupFile" type="file" accept="application/x-ndjson,application/json,.yxz,.json" hidden>
 <p style="font-size:12px;color:var(--muted);margin-top:12px">备份包含私人照片，请自行妥善保管。导入会替换当前账号的本机资料。</p>
 </div>
 <p style="margin-top:24px;color:var(--muted);font-size:13px">切换服务将退出当前登录，各服务的数据独立保存。演示不会调用付费模型。</p></div></main>

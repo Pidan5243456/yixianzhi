@@ -8,7 +8,7 @@ function upload(owner,data){const {b,mime}=require('./state').decodeImage(data),
  if(exists&&fs.existsSync(path.join(dataDir,exists.path))){db.prepare('INSERT OR REPLACE INTO media_age VALUES(?,?,?)').run(owner,id,Date.now());return 'media:'+id;}
  const max=Number(process.env.MEDIA_QUOTA_MB||200)*1024*1024;if(!Number.isFinite(max)||max<=0)throw fail('图片容量配置无效',503);
  const used=db.prepare('SELECT coalesce(sum(size),0) bytes FROM media WHERE owner=?').get(owner).bytes;
- if(used+b.length>max)throw fail('账号图片空间已满',413);
+ if(used-(exists?.size||0)+b.length>max)throw fail('账号图片空间已满',413);
  const relative='media/'+hash(owner)+'/'+id,dest=path.join(dataDir,relative);fs.mkdirSync(path.dirname(dest),{recursive:true});
  const tmp=dest+'.'+crypto.randomUUID()+'.tmp';let fd;
  try{fd=fs.openSync(tmp,'wx');fs.writeFileSync(fd,b);fs.fsyncSync(fd);fs.closeSync(fd);fd=null;fs.renameSync(tmp,dest);}finally{if(fd!==null&&fd!==undefined)fs.closeSync(fd);if(fs.existsSync(tmp))fs.unlinkSync(tmp);}
@@ -16,10 +16,11 @@ function upload(owner,data){const {b,mime}=require('./state').decodeImage(data),
  db.prepare('INSERT OR REPLACE INTO media_age VALUES(?,?,?)').run(owner,id,Date.now());return 'media:'+id;
  });}
 function read(owner,id){const r=row(owner,id);return `data:${r.mime};base64,${fs.readFileSync(path.join(dataDir,r.path)).toString('base64')}`;}
+function touch(owner,value){for(const id of new Set((JSON.stringify(value).match(/media:[a-f0-9]{64}/g)||[]).map(r=>r.slice(6))))db.prepare('INSERT INTO media_age(owner,id,created_at) SELECT owner,id,? FROM media WHERE owner=? AND id=? ON CONFLICT(owner,id) DO UPDATE SET created_at=excluded.created_at').run(Date.now(),owner,id);}
 function transform(v,fn){if(typeof v==='string')return fn(v);if(Array.isArray(v))return v.map(x=>transform(x,fn));if(v&&typeof v==='object')return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,transform(x,fn)]));return v;}
 function deflate(owner,value){return transform(value,v=>v.startsWith('data:image/')?upload(owner,v):v);}
 function inflate(owner,value){return transform(value,v=>v.startsWith('media:')?read(owner,v.slice(6)):v);}
-function validateRefs(owner,value){transform(value,v=>{if(v.startsWith('data:'))throw fail('图片请单独上传');if(v.startsWith('media:'))row(owner,v.slice(6));return v;});}
+function validateRefs(owner,value){transform(value,v=>{if(v.startsWith('data:'))throw fail('图片请单独上传');if(v.startsWith('media:')){const r=row(owner,v.slice(6));if(!fs.existsSync(path.join(dataDir,r.path)))throw fail('图片文件缺失，请重新上传',410);}return v;});}
 function collect(owner){return transaction(()=>{
  const live=new Set();const mark=txt=>{for(const m of (txt||'').matchAll(/media:([a-f0-9]{64})/g))live.add(m[1]);};
  for(const r of db.prepare('SELECT data FROM entities WHERE owner=? AND deleted=0').all(owner))mark(r.data);
@@ -34,4 +35,5 @@ function collect(owner){return transaction(()=>{
   if(fs.existsSync(file))fs.unlinkSync(file);db.prepare('DELETE FROM media WHERE owner=? AND id=?').run(owner,r.id);db.prepare('DELETE FROM media_age WHERE owner=? AND id=?').run(owner,r.id);deleted++;
  }return deleted;
  });}
-module.exports={upload,read,row,deflate,inflate,validateRefs,collect,hash};
+function removeAll(owner){for(const r of db.prepare('SELECT path FROM media WHERE owner=?').all(owner)){const file=path.resolve(dataDir,r.path);if(!file.startsWith(path.resolve(dataDir,'media')+path.sep))throw fail('媒体路径无效',500);if(fs.existsSync(file))fs.unlinkSync(file);}db.prepare('DELETE FROM media WHERE owner=?').run(owner);}
+module.exports={upload,read,row,deflate,inflate,validateRefs,collect,hash,removeAll,touch};

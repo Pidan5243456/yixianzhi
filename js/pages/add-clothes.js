@@ -4,7 +4,7 @@ const original=Store.get().customItems.find(i=>i.id===editingId);
 let photo=original?.dataUrl||null,picking=0,saving=false,savedId=original?.id||'c_'+crypto.randomUUID();
 const pending=Store.get().pendingUpload;
 if(!photo&&pending&&pending!=='ph')photo=pending.image||pending;
-function showForm(){if(!photo)return;$('#garmentPhoto').src=photo;$('#garmentForm').hidden=false;}
+function showForm(){if(!photo)return;$('#garmentPhoto').src=MediaCache.src(photo);$('#garmentForm').hidden=false;}
 if(original){$('.entry h1').textContent='编辑衣物';$('#garmentName').value=original.name;$('#garmentCategory').value=original.cat;$('#garmentScene').value=original.scene||'日常';}
 showForm();
 $('#wayAlbum').onclick=()=>$('#fileInput').click();$('#wayCam').onclick=()=>$('#camInput').click();

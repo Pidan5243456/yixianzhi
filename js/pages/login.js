@@ -83,13 +83,13 @@
     const btn = $("#btnLogin");
     btn.disabled = true; btn.textContent = "登录中…";
     try {
-      let token = "";
+      let token = "", generation;
       if (!demoMode) {
         const data = await api("/api/auth/login", { email, code });
-        token = data.token;
+        token = data.token; generation=data.generation;
       }
       /* 登录态写进账号资料：账号页展示邮箱，重置演示数据时一并登出 */
-      await LocalState.activate(email, token);
+      await LocalState.activate(email, token, generation);
       /* 拉回该账号云端的轻量资料（换设备/清缓存后找回档案/收藏/衣橱选择） */
       await pullLightState();
       savedToast("登录成功");

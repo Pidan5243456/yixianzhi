@@ -87,7 +87,7 @@
 <link rel="stylesheet" href="css/prototype.css">
 <script src="js/build-config.js"></script>
 <script src="js/runtime.js"></script>
-<script src="js/persistence.js"></script>
+<script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="history">
 <div class="app" id="appRoot">
@@ -101,6 +101,7 @@
     <button class="edit-pill rise" id="btnEdit">编辑</button>
   </div>
 
+  <div id="taskList" style="padding:0 var(--pad)"></div>
   <div class="hist-grid rise d1" id="grid"></div>
 
   <div class="del-bar">
@@ -120,7 +121,7 @@
 
 
 
-<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/history.js"]</script>
+<script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/ai.js","js/pages/history.js"]</script>
 <script src="js/bootstrap.js" defer></script>
 </body>
 </html>

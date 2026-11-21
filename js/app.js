@@ -26,6 +26,7 @@ async function resetDemoData() {
    可在自己脚本里设 window.KEEP_BFCACHE = true 并自行处理恢复逻辑 */
 window.addEventListener("pageshow", (e) => {
   if (!e.persisted) return;
+  AppNav.navigating=false;
   if (window.KEEP_BFCACHE) return;
   LocalState.locked=false;
   AppNav.reload();
@@ -53,7 +54,7 @@ const Store = {
         budgetMin: "", budgetMax: "", styles: [], colorTypes: [],
       },
       account: { nick: "", avatar: "", email: "" }, // 账号资料（本地演示，真鉴权接入前无服务端）
-      privacyOk: true,                              // 设置页「隐私协议授权」开关
+      privacyOk: false,                              // 设置页「隐私协议授权」开关
       onboarded: false,
     };
   },
@@ -107,7 +108,7 @@ const Track = {
          不是真实访问，否则会给每页凭空造出一次 PV、污染漏斗 */
       if (window.top !== window.self) return;
       const s = Store.get();
-      if (s.privacyOk === false) return;              /* 用户关了隐私授权：不采集 */
+      if (s.privacyOk !== true) return;              /* 用户关了隐私授权：不采集 */
       const body = JSON.stringify({
         event,
         props: props || {},
@@ -158,7 +159,7 @@ function availableOutfits() {
 /* 单品 <img>：优先找 assets/real/<id>.png → .jpg → 占位剪影 */
 function itemImg(item, cls = "ph-img") {
   if (!item) return `<span class="missing-piece">衣物已移除</span>`;
-  if (item.dataUrl) return `<img class="${cls}" src="${item.dataUrl}" alt="${escapeHTML(item.name)}" loading="lazy">`;
+  if (item.dataUrl) return `<img class="${cls}" src="${MediaCache.src(item.dataUrl)}" alt="${escapeHTML(item.name)}" loading="lazy">`;
   return `<img class="${cls}" src="assets/real/${item.id}.png" alt="${escapeHTML(item.name)}" loading="lazy"
     onerror="phFallback(this,'${safePh(item.ph)}')">`;
 }
@@ -341,7 +342,7 @@ setInterval(() => {
 
 /* 压缩图片：限制最大边长并转 JPEG，防止 localStorage 超限 */
 function compressImage(dataUrl, maxW = 800, quality = 0.8) {
-  return new Promise(resolve => {
+  return new Promise((resolve,reject) => {
     const img = new Image();
     img.onload = () => {
       const scale = Math.min(1, maxW / Math.max(img.width, img.height));
@@ -353,7 +354,7 @@ function compressImage(dataUrl, maxW = 800, quality = 0.8) {
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
+    MediaCache.url(dataUrl).then(url=>img.src=url).catch(reject);
   });
 }
 
@@ -363,7 +364,7 @@ function compressImage(dataUrl, maxW = 800, quality = 0.8) {
    做法：扫描非白像素的边界框 → 裁掉四周空白 → 6% 留边 → 补成正方形白底 → 压缩输出。
    近白(≥245)才算背景，白裤等浅色单品靠内部阴影褶皱不会被误裁；全白/异常图原样返回 */
 function trimToSquare(dataUrl, maxW = 800, quality = 0.8) {
-  return new Promise(resolve => {
+  return new Promise((resolve,reject) => {
     const img = new Image();
     img.onload = () => {
       try {
@@ -401,7 +402,7 @@ function trimToSquare(dataUrl, maxW = 800, quality = 0.8) {
       } catch { resolve(dataUrl); }
     };
     img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
+    MediaCache.url(dataUrl).then(url=>img.src=url).catch(reject);
   });
 }
 
@@ -417,7 +418,7 @@ async function buildSegmentItems(result) {
     cat: ["上衣", "下装", "鞋子", "连体裙"].includes(d.category) ? d.category : "上衣",
     ph: "tee",
     /* 生成图入橱前裁白边+方形规整+压缩（trimToSquare） */
-    dataUrl: await trimToSquare(d.image || result.image),
+    dataUrl: (d.image||result.image)?.startsWith('media:')?(d.image||result.image):await trimToSquare(d.image||result.image),
     labels: d.labels || null,
   })));
 }
@@ -425,7 +426,7 @@ async function buildSegmentItems(result) {
 /* 任务快照（内存，不入 localStorage）：jobId → /api/segment/result 最近一次返回，
    衣橱/试穿抽屉的进度卡靠它渲染逐件状态 */
 const SEG_SNAPSHOT = {};
-const SEG_JOB_MAX_AGE = 30 * 60 * 1000;   // 与服务端 TTL 对齐：超时任务客户端也放弃
+// Completed records are durable; the client never discards a task by elapsed time.
 
 let _segPolling = false;
 async function pollSegmentJobs() {
@@ -440,12 +441,7 @@ async function pollSegmentJobs() {
     const processed = new Set(Store.get().processedSegmentTargets || []);
     let changed = false;
     for (const job of pend) {
-      if (Date.now() - job.ts > SEG_JOB_MAX_AGE) {
-        changed = true;
-        delete SEG_SNAPSHOT[job.jobId];
-        toast("有一次拆分超时未完成，请重新上传");
-        continue;
-      }
+
       let r;
       try {
         const resp = await AppAPI.request("/api/segment/result", {
@@ -456,7 +452,7 @@ async function pollSegmentJobs() {
       } catch { r = null; }   /* 网络闪断/后端未起：保留任务，下轮再试 */
       if (!r) { keep.push(job); continue; }
 
-      if (r.status === "error" || r.status === "missing") {
+      if (r.status === "missing") {
         changed = true;   /* 识别失败或服务重启丢失：移除任务并提示 */
         delete SEG_SNAPSHOT[job.jobId];
         toast(r.status === "error" ? "有一次拆分识别失败，请重新上传" : "拆分任务已丢失，请重新上传");
@@ -469,7 +465,7 @@ async function pollSegmentJobs() {
       for (let i = 0; i < (r.targets || []).length; i++) {
         const t = r.targets[i];
         if (t.state === "done" && t.item && !landed.has(i)) {
-          if (!processed.has(t.item.id)) { addItems.push(...await buildSegmentItems({ items: [t.item] })); processed.add(t.item.id); }
+          if (!processed.has(t.item.id)) { if(AppAPI.demo)addItems.push(...await buildSegmentItems({items:[t.item]})); processed.add(t.item.id); }
           landed.add(i);
           changed = true;
         }
@@ -499,6 +495,7 @@ async function pollSegmentJobs() {
         Track.send("item_confirm", { count: addItems.length });   /* 拆图成品入衣橱 */
       }
     }
+    if(changed&&!AppAPI.demo&&typeof CloudSync!=='undefined')CloudSync.schedule();
     /* 每轮都通知页面：进度卡需要感知 排队中→生成中 等状态推进 */
     window.dispatchEvent(new CustomEvent("segments-updated"));
   } finally {
@@ -512,6 +509,7 @@ function segCardList() {
   const out = [];
   for (const job of (Store.get().pendingSegments || [])) {
     const snap = SEG_SNAPSHOT[job.jobId];
+    if(snap?.status==='error'){out.push({jobId:job.jobId,index:-1,state:'fail',label:snap.error||'整理未完成'});continue;}
     if (!snap || snap.status === "detecting") {
       out.push({ jobId: job.jobId, index: -1, state: "detecting", label: "" });
       continue;

@@ -8,15 +8,16 @@ function pctEncode(s) {
   return encodeURIComponent(s).replace(/\+/g, "%20").replace(/\*/g, "%2A").replace(/%7E/g, "~");
 }
 
-async function sendMail(email, code) {
+async function sendMail(email, code, purpose='login') {
+  const action=purpose==='delete'?'注销账号':'登录';
   const params = {
     Action: "SingleSendMail",
     AccountName: DM_ACCOUNT,
     AddressType: "1",              // 1 = 使用发信地址作为管理地址
     ReplyToAddress: "false",
     ToAddress: email,
-    Subject: "衣先知 · 登录验证码",
-    HtmlBody: `<p>您的衣先知登录验证码是 <b style="font-size:18px;letter-spacing:2px">${code}</b>，5 分钟内有效。</p><p>如非本人操作，请忽略此邮件。</p>`,
+    Subject: `衣先知 · ${action}验证码`,
+    HtmlBody: `<p>您的衣先知${action}验证码是 <b style="font-size:18px;letter-spacing:2px">${code}</b>，5 分钟内有效。</p><p>如非本人操作，请忽略此邮件。</p>`,
     FromAlias: DM_FROM_ALIAS,
     Format: "JSON",
     Version: "2015-11-23",

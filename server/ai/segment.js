@@ -39,7 +39,7 @@ const DASHSCOPE_IMG_API = `${DASHSCOPE_API_BASE}/api/v1/services/aigc/multimodal
 async function fetchT(url, opts, timeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try { return await (opts.method==='POST'?providerFetch('dashscope',url,{...opts,signal:ctrl.signal}):fetch(url,{...opts,signal:ctrl.signal})); }
+  try { return await (opts.method==='POST'?providerFetch('dashscope',url,{...opts,signal:ctrl.signal}):require('../ai-control').boundedResponse(await fetch(url,{...opts,signal:ctrl.signal}),3*1024*1024)); }
   finally { clearTimeout(timer); }
 }
 async function qwenImageEdit(prompt, imageDataUrl) {
@@ -119,8 +119,8 @@ async function segmentOne(req) {
     return { item: { image: req.image, category: "上衣", name: d.description || "我的单品" }, mock: true };
   }
 
-  let flat = null;
-  if (DASHSCOPE_API_KEY) {
+  let flat = req.flatImage || null;
+  if (!flat && DASHSCOPE_API_KEY) {
     try {
       flat = await qwenImageEdit(flatImagePrompt(d.category), req.image);
     } catch (e) {
@@ -130,6 +130,8 @@ async function segmentOne(req) {
     }
   }
   const img = flat || req.image;
+  // Persist the expensive image before any optional tagging/backup attempt.
+  if(req.onFlat)await req.onFlat(img);
 
   let labels = null;
   try {

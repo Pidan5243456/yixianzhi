@@ -2,7 +2,7 @@
 
 管理自己的衣物，组合并保存穿搭，需要时再生成试穿效果。原生网页界面通过 Capacitor 打包 Android，后端使用 Node.js 和 SQLite。
 
-这是从原型中筛选代码后建立的独立仓库，不包含真实账号数据、密钥、参考项目或旧 APK。当前正在完成 1.4 产品流程与数据链路改造；验收状态见 [任务看板](documents/task-tracker.md)。
+这是从原型中筛选代码后建立的独立仓库，不包含真实账号数据、密钥、参考项目或旧 APK。当前已完成 1.4 首版核心流程及数据链路，提供调试 APK 和可部署后端；验收状态见 [任务看板](documents/task-tracker.md)。
 
 ## 开发
 
@@ -20,7 +20,10 @@ npm start
 npm test
 npm run test:product
 npm run test:sync
+npm run test:release
 ```
+
+已实现手动衣橱、自配穿搭与收藏、独立 AI 推荐/试穿、持久任务与费用约束、私有图片、增量同步、备份及账号注销。进入页面和换衣不调用 AI；真实模型和邮箱配置由部署者填写。
 
 Android 构建与后端部署见 [部署指南](documents/core/deployment.md)。[文档索引](documents/index.md) 按核心规范、客户端、业务模块和接口契约组织。
 

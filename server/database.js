@@ -23,10 +23,13 @@ function transaction(fn) {
 }
 function ensureUser(email) {
   const now = new Date().toISOString();
+  const account=db.prepare('SELECT active FROM accounts WHERE email=?').get(email);
+  if(account&&!account.active)throw Object.assign(new Error('账号正在注销'),{status:401});
+  if(!account){const generation=Number(db.prepare('INSERT INTO account_generation DEFAULT VALUES').run().lastInsertRowid);db.prepare('INSERT INTO accounts VALUES(?,?,1)').run(email,generation);}
   db.prepare('INSERT INTO users VALUES(?,?,?) ON CONFLICT(email) DO UPDATE SET last_login_at=excluded.last_login_at').run(email,now,now);
 }
 const version=db.prepare('PRAGMA user_version').get().user_version;
-if(version>3) throw new Error('数据库版本较新，请使用匹配的服务版本');
+if(version>4) throw new Error('数据库版本较新，请使用匹配的服务版本');
 if(version<2) transaction(()=>{
  db.exec(`CREATE TABLE IF NOT EXISTS consents(owner TEXT NOT NULL REFERENCES users(email),purpose TEXT NOT NULL,version INTEGER NOT NULL,granted INTEGER NOT NULL,updated_at INTEGER NOT NULL,PRIMARY KEY(owner,purpose));
  CREATE TABLE IF NOT EXISTS ai_operations(id TEXT PRIMARY KEY,owner TEXT NOT NULL REFERENCES users(email),kind TEXT NOT NULL,fingerprint TEXT NOT NULL,status TEXT NOT NULL,result TEXT,error TEXT,created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,cycle INTEGER NOT NULL DEFAULT 1,UNIQUE(owner,kind,fingerprint));
@@ -47,5 +50,10 @@ if(version<3) transaction(()=>{
  INSERT OR IGNORE INTO accounts(email) SELECT email FROM users;
  CREATE TABLE IF NOT EXISTS operation_inputs(id TEXT PRIMARY KEY,data TEXT NOT NULL,expires_at INTEGER NOT NULL);
  PRAGMA user_version=3;`);
+});
+if(version<4) transaction(()=>{
+ db.exec(`CREATE TABLE account_generation(id INTEGER PRIMARY KEY AUTOINCREMENT);
+ INSERT INTO account_generation(id) SELECT coalesce(max(generation),0) FROM accounts;
+ PRAGMA user_version=4;`);
 });
 module.exports = { db, dataDir, transaction, ensureUser };

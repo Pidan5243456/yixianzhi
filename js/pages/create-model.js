@@ -26,7 +26,7 @@
     $("#presetGrid").innerHTML = PRESET_MODELS.map(p => `
       <div class="preset ${sel === p.id ? "on" : ""}" data-p="${p.id}" data-nm="${p.name}">
         <span class="nm">${p.name}</span>
-        <img src="${defaultModelSrc()}" onerror="this.onerror=null;this.src='assets/ph/model.svg'">
+        <img src="${MediaCache.src(defaultModelSrc())}" onerror="this.onerror=null;this.src='assets/ph/model.svg'">
       </div>`).join("");
     $$("[data-p]").forEach(c => c.addEventListener("click", () => {
       pickedPreset = c.dataset.p;
@@ -71,7 +71,7 @@
       $("#paneMine").innerHTML = `
         <div class="my-list">
           <div class="big-photo rise">
-            <img src="${cur.dataUrl}">
+            <img src="${MediaCache.src(cur.dataUrl)}">
             <button class="del" data-del="${cur.id}" aria-label="删除照片">${uiIcon("trash")}</button>
           </div>
           <button class="add-model rise d1" onclick="openSheet('sheetTip')"><span class="plus">＋</span>添加模特</button>
@@ -94,7 +94,7 @@
     }
   }
 
-  /* 拍照 / 相册：都走真实 AI 质检（模型1），通过才创建模特 */
+  /* 上传只做本机处理，用户确认使用。 */
   $("#btnCam").addEventListener("click", () => {
     $("#fileInput").setAttribute("capture", "environment");   // 手机上直接调起相机
     $("#fileInput").click();
@@ -107,32 +107,14 @@
     const f = e.target.files[0];
     if (!f) return;
     closeSheet("sheetTip");
-    const reader = new FileReader();
     const epoch=LocalState.epoch,key=LocalState.key;
-    reader.onload = async () => {
-      const small = await LocalState.prepare(()=>compressImage(reader.result, 900, 0.8));
+    LocalState.prepare(async()=>{try{
+      const raw=await new Promise((ok,no)=>{const reader=new FileReader();reader.onload=()=>ok(reader.result);reader.onerror=()=>no(reader.error);reader.readAsDataURL(f);});
+      const small=await compressImage(raw,900,.8);
       if(epoch!==LocalState.epoch||key!==LocalState.key||LocalState.locked)return;
-      $("#scanImg").src = small;
-      $("#scanVeil").classList.add("show");
-
-      const r={pass:true};   // 真实质检
-      $("#scanVeil").classList.remove("show");
-
-      if (r.pass) {
-        const id = "u" + Date.now();
-        /* 统一为"停留确认"：上传成功只入库并作为候选展示，点「确认」才真正生效 */
-        Store.set({
-          models: [...Store.get().models, { id, name: "我的模特", dataUrl: small }],
-        });
-        mineShow = id;
-        savedToast("照片已保存，点「确认」使用");
-        renderMine();
-      } else {
-        $("#failReason").textContent = r.primary_reason || "照片不符合要求";
-        openModal("modalFail");
-      }
-    };
-    reader.readAsDataURL(f);
+      const id='u_'+crypto.randomUUID();if(Store.get().models.length>=1000)throw Error('模特照片数量已达上限');
+      Store.set({models:[...Store.get().models,{id,name:'我的模特',dataUrl:small}]});await LocalState.flush();mineShow=id;renderMine();toast('照片已保存，点「确认」使用');
+    }catch(e){toast(e.message||'照片无法处理');throw e;}}).catch(()=>{});
     e.target.value = "";
   });
 

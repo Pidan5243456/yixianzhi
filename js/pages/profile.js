@@ -9,7 +9,7 @@
   const acc = Store.get().account || {};
   const nick = acc.nick || "我的账号";
   $("#uname").textContent = nick;
-  $("#avatar").innerHTML = acc.avatar ? `<img src="${acc.avatar}" alt="">` : nick[0];
+  $("#avatar").innerHTML = acc.avatar ? `<img src="${MediaCache.src(acc.avatar)}" alt="">` : nick[0];
 
   $$(".seg button").forEach(b => b.addEventListener("click", () => {
     $$(".seg button").forEach(x => x.classList.remove("on"));
@@ -49,8 +49,8 @@
 
     $("#modelCard").innerHTML = `
       ${cur.dataUrl
-        ? `<img src="${cur.dataUrl}">`
-        : `<img src="${defaultModelSrc()}" onerror="this.onerror=null;this.src='assets/ph/model.svg'" style="opacity:.95">`}
+        ? `<img src="${MediaCache.src(cur.dataUrl)}">`
+        : `<img src="${MediaCache.src(defaultModelSrc())}" onerror="this.onerror=null;this.src='assets/ph/model.svg'" style="opacity:.95">`}
       ${cur.dataUrl ? `<button class="del" id="btnDelModel" aria-label="删除照片">${uiIcon("trash")}</button>` : ""}`;
     $("#modelName").textContent = cur.name;
     $("#modelStrip").innerHTML = `
@@ -58,8 +58,8 @@
       ${s.models.map(m => `
         <div class="mthumb ${m.id === cur.id ? "on" : ""}" data-m="${m.id}" title="${escapeHTML(m.name)}">
           ${m.dataUrl
-            ? `<img src="${m.dataUrl}">`
-            : `<img src="${defaultModelSrc()}" onerror="this.onerror=null;this.src='assets/ph/model.svg'" style="object-fit:cover">`}
+            ? `<img src="${MediaCache.src(m.dataUrl)}">`
+            : `<img src="${MediaCache.src(defaultModelSrc())}" onerror="this.onerror=null;this.src='assets/ph/model.svg'" style="object-fit:cover">`}
         </div>`).join("")}`;
     $$("[data-m]").forEach(t => t.addEventListener("click", () => {
       Store.set({ curModel: t.dataset.m });
@@ -74,3 +74,5 @@
   }
 
   renderFavs(); renderModels();
+
+window.addEventListener('data-synced',()=>renderFavs());

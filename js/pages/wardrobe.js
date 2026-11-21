@@ -165,3 +165,5 @@
 
   // Older interrupted uploads remain drafts and never start a billable job on page entry.
   if(Store.get().pendingUpload){const link=document.createElement('a');link.className='btn btn-ghost';link.href='add-clothes.html';link.textContent='继续编辑未保存的照片';$('.closet-intro').append(link);}
+
+window.addEventListener('data-synced',()=>renderItems());

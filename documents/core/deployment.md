@@ -1,6 +1,6 @@
 # 开发、部署与 Android 构建
 
-更新：2026-11-21。当前 1.4.0 为开发版，预算/授权/增量同步仍未接入完成。以下是可复现的启动和构建流程，不代表当前代码已满足正式上线条件。
+更新：2026-11-21。当前 1.4.0 首版已接入核心流程、预算、授权和增量同步，交付调试 APK 与可部署后端。真实服务配置、真机验收及正式签名仍是发布前事项。
 
 ## 本地开发
 
@@ -32,17 +32,19 @@ npm start
 | 配置 | 用途 |
 |---|---|
 | NODE_ENV / DEMO_MODE | 生产使用 production / false |
-| AUTH_SECRET | 至少 24 字符的随机秘密；变更会影响既有令牌 |
+| AUTH_SECRET | 至少 24 字符的随机秘密，用于验证码 HMAC；会话在数据库中独立撤销 |
 | PORT / DATA_DIR | 默认端口 8394；数据库和私有媒体持久目录 |
-| OPENROUTER_API_KEY / DASHSCOPE_API_KEY | 模型配置；填入后仍需完成 M3 接入及联调 |
+| OPENROUTER_API_KEY / DASHSCOPE_API_KEY | 模型配置；填入后需配置预算并进行真实供应商联调 |
 | DASHSCOPE_API_BASE | 与账号所属服务匹配的后端地址 |
 | DM_ACCESS_KEY_ID / DM_ACCESS_KEY_SECRET / DM_ACCOUNT / DM_ENDPOINT | 已配置发信账号的邮件服务 |
 | ALLOWED_ORIGINS | 额外网页来源，逗号分隔；APK 来源已内置 |
-| MEDIA_QUOTA_MB | 单账号媒体容量，默认 200；现行全量同步仍受 30 MiB 请求限制 |
-| QUOTA_*_PER_DAY | 各功能次数限制；当前新旧实现的 0 语义尚待统一 |
+| MEDIA_QUOTA_MB | 单账号媒体容量，默认 200 MiB；图片独立上传，单张最多 3 MiB |
+| QUOTA_*_PER_DAY | 各功能次数限制；0 禁用；每日次数与供应商预算同时校验 |
 | ADMIN_TOKEN | 管理统计密钥；不要在共享链接中传递 |
 
-预算变量及其当前接入状态见 [M3](../modules/m3-ai.md)。不要把示例中的次数配额当作已完成的成本硬上限。
+预算变量已完整列入示例，默认全部为 0，真实供应商调用因此关闭。需填写全站/用户日预算及供应商单次保守预留值，单位为整数 micro USD。设置依据见 [M3](../modules/m3-ai.md)；同时配置供应商账户额度。
+
+TRUST_PROXY 只填写实际可信代理 CIDR；未配置时不信任转发头。管理统计通过 Bearer ADMIN_TOKEN 请求头认证，不放在 URL 中。
 
 ## Docker 单机部署
 
@@ -58,7 +60,7 @@ compose 仅将容器端口绑定到服务器 `127.0.0.1:8394`，由 HTTPS 反向
 
 容器采用 node 用户。保证数据卷可写，限制代理请求大小并与应用 30 MiB 上限协调；对外地址必须能被手机访问。手机中的 localhost 指手机自身，不是开发电脑。
 
-部署后先检查 health，再用测试账号验证邮件、手动衣橱和同步。当前版本未达到完整 AI 上线门槛，不能仅凭 health 的 aiReady 发布。
+部署后先检查 health，再用测试账号验证邮件、手动衣橱和同步。随后主动确认授权，用少量受控请求核对实际模型、用量及预算。health 的 aiReady 只检查密钥存在，不能作为上线验收。
 
 ## 备份与升级
 
@@ -75,6 +77,10 @@ Windows 构建和校验使用 PowerShell 7（pwsh）、Java 21、Android SDK pla
 .\scripts\verify-apk.ps1 -AndroidSdk 'C:\Android\Sdk' -JavaHome 'C:\Program Files\Java\jdk-21'
 ```
 
-脚本先构建网页并同步 Capacitor，再运行 assembleDebug。当前版本预期产物 `artifacts/yixianzhi-1.4.0-debug.apk`；校验报告 `artifacts/apk-verification.json` 检查签名、包名、中文名称、版本、SDK、资源哈希和私有路径泄漏。
+脚本先构建网页并同步 Capacitor，再运行 assembleDebug。当前版本产物 `artifacts/yixianzhi-1.4.0-debug.apk`；校验报告 `artifacts/apk-verification.json` 检查签名、包名、中文名称、版本、SDK、资源哈希和私有路径泄漏。
 
-产物路径是构建约定，是否已经产出以 [测试记录](../testing/latest.md) 为准。上述脚本不生成正式签名发布包；发布需单独的私钥保管与 release 构建配置，签名私钥不能进入仓库。
+已产出调试 APK，资源校验结果以 [测试记录](../testing/latest.md) 为准。上述脚本不生成正式签名发布包；发布需单独的私钥保管与 release 构建配置，签名私钥不能进入仓库。
+
+## 已安装旧调试包的设备
+
+本仓库生成的新调试签名与 AI-dress-up 的 1.3.1-debug 不同，Android 不允许直接覆盖。先在旧 App 导出备份并保管好，再由设备使用者更换安装并导入 .json/.yxz 备份。不要先卸载再寻找本机数据。本次没有读取旧签名私钥或改动设备。正式发布应固定受保护的 release 签名。

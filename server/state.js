@@ -5,7 +5,7 @@ const {db,dataDir,transaction,ensureUser}=require('./database');
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
 const keys=['dataVersion','customOutfits','account','profile','favorites','wardrobe','deletedItems','onboarded','privacyOk','curModel','customItems','models','history','historySeeded','processedSegmentTargets'];
-function validate(input) {
+function validate(input,{refs=false}={}) {
   if (!input || typeof input!=='object' || Array.isArray(input)) throw fail('状态格式错误');
   const s={}; for(const k of keys) if(input[k]!==undefined) s[k]=structuredClone(input[k]);
   for(const k of ['favorites','wardrobe','deletedItems','customItems','customOutfits','models','history']) {
@@ -30,7 +30,7 @@ function validate(input) {
   const imagePaths=new Set(['account.avatar',...s.customItems.map((_,i)=>`customItems.${i}.dataUrl`),...s.models.map((_,i)=>`models.${i}.dataUrl`),...s.history.map((_,i)=>`history.${i}.image`)]);
   function walk(v,p='') {
     if(typeof v==='string') {
-      if(v.startsWith('media:')) throw fail('不接受内部媒体引用');
+      if(v.startsWith('media:')&&(!refs||!imagePaths.has(p)||!/^media:[a-f0-9]{64}$/.test(v))) throw fail('媒体引用不合法');
       if(v.startsWith('data:') && !imagePaths.has(p)) throw fail('图片字段不允许');
       if(!imagePaths.has(p) && (v.length>4000 || /[<>]/.test(v))) throw fail('文本字段不合法');
     } else if(v && typeof v==='object') {
@@ -38,7 +38,7 @@ function validate(input) {
       for(const [k,c] of Object.entries(v)) { if(['__proto__','constructor','prototype'].includes(k)) throw fail('非法字段'); walk(c,p?p+'.'+k:k); }
     }
   } walk(s);
-  for(const p of imagePaths) { const bits=p.split('.'); let v=s; for(const b of bits) v=v?.[b]; if(v!==undefined && v!==null && v!=='' && (typeof v!=='string'||!v.startsWith('data:image/'))) throw fail('照片必须是图片数据'); }
+  for(const p of imagePaths) { const bits=p.split('.'); let v=s; for(const b of bits) v=v?.[b]; if(v!==undefined && v!==null && v!=='' && (typeof v!=='string'||!(v.startsWith('data:image/')||(refs&&/^media:[a-f0-9]{64}$/.test(v))))) throw fail('照片必须是图片数据'); }
   return {s,imagePaths};
 }
 function decodeImage(value) {
@@ -66,6 +66,7 @@ function pull(email) {
   return {state:inflate(JSON.parse(r.state)),version:r.version,schemaVersion:1,dataVersion:2,updatedAt:r.updated_at};
 }
 function push(email,input,expectedVersion) {
+  if(db.prepare('SELECT 1 FROM sync_migrations WHERE owner=?').get(email))throw fail('请更新 App 后使用增量同步',426);
   if(!Number.isSafeInteger(expectedVersion)||expectedVersion<0) throw fail('缺少有效 expectedVersion');
   if(Buffer.byteLength(JSON.stringify(input))>30*1024*1024) throw fail('资料超过30MB',413);
   const old=db.prepare('SELECT state FROM user_state WHERE email=?').get(email);

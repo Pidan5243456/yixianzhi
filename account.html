@@ -46,7 +46,7 @@
 <link rel="stylesheet" href="css/prototype.css">
 <script src="js/build-config.js"></script>
 <script src="js/runtime.js"></script>
-<script src="js/persistence.js"></script>
+<script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="account">
 <div class="app">
@@ -74,13 +74,10 @@
         <span class="sl">登录邮箱</span>
         <span class="sv add" id="emailVal">未绑定</span>
       </button>
-      <button class="srow" onclick="toast('上线后开放微信绑定')">
-        <span class="sl">微信</span>
-        <span class="sv add">未绑定</span>
-        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
-      </button>
+
     </div>
 
+    <div class="sgroup"><button id="deleteAccount" class="srow" style="justify-content:center;color:var(--danger)">注销账号</button></div>
     <div class="sgroup rise d1">
       <button class="srow" style="justify-content:center;color:var(--danger);font-weight:700" onclick="openModal('modalLogout')">退出登录</button>
     </div>

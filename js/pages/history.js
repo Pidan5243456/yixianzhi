@@ -19,10 +19,10 @@
     $("#grid").innerHTML = l.length ? l.map((h, i) => `
       <div class="hcard" data-id="${h.id}" data-i="${i}">
         ${h.image
-          ? `<img src="${h.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="${h.kind==='tryon'?'AI试穿效果':h.kind==='collage'?'演示拼贴':'旧版记录'}">`
+          ? `<img src="${MediaCache.src(h.image)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" alt="${h.kind==='tryon'?'AI试穿效果':h.kind==='collage'?'演示拼贴':'旧版记录'}">`
           : `<div class="bg" style="background:${tintOf(i)}"></div>
              <div class="fit"><img src="assets/ph/model.svg" alt="试衣照"></div>`}
-        <span class="ck"></span>
+        <span style="position:absolute;bottom:6px;left:6px;background:#fff;padding:3px 6px;border-radius:6px;font-size:11px">${h.kind==='collage'?'演示拼贴':h.kind==='tryon'?'AI 试穿':'旧版记录'}</span><span class="ck"></span>
       </div>`).join("")
       : `<div class="empty" style="grid-column:1/-1"><span class="empty-visual">${uiIcon("photo")}</span><h3>还没有试穿记录</h3>你的试穿记录会保存在这里<br><a href="home.html" class="btn btn-primary">去试穿</a></div>`;
 
@@ -52,7 +52,7 @@
     $("#vStrip").innerHTML = l.map((h, i) => `
       <div class="vthumb" data-v="${i}">
         ${h.image
-          ? `<img src="${h.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`
+          ? `<img src="${MediaCache.src(h.image)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`
           : `<div class="bg" style="background:${tintOf(i)}"></div><img src="assets/ph/model.svg">`}
       </div>`).join("");
     $$("[data-v]").forEach(t => t.addEventListener("click", () => {
@@ -65,7 +65,7 @@
     const cur = list()[vIndex];
     if (cur && cur.image) {
       $("#vPhoto").style.background = "#1a1a1c";
-      $("#vPhoto").innerHTML = `<img src="${cur.image}" style="max-width:100%;max-height:100%;border-radius:20px;object-fit:contain">`;
+      $("#vPhoto").innerHTML = `<img src="${MediaCache.src(cur.image)}" style="max-width:100%;max-height:100%;border-radius:20px;object-fit:contain">`;
     } else {
       $("#vPhoto").style.background = tintOf(vIndex);
       $("#vPhoto").innerHTML = `<img src="assets/ph/model.svg">`;
@@ -95,3 +95,15 @@
   });
 
   renderGrid();
+
+window.addEventListener('data-synced',()=>renderGrid());
+
+let taskPolling=false;
+async function refreshTasks(){if(taskPolling||AppAPI.demo||!Store.get().account?.token)return;taskPolling=true;const key=LocalState.key,epoch=LocalState.epoch;try{
+ const response=await AppAPI.request('/api/ai/operations');const data=await response.json();if(!response.ok)throw Error(data.error||'任务读取失败');if(key!==LocalState.key||epoch!==LocalState.epoch)return;
+ const tasks=data.operations.filter(o=>o.status!=='done');
+ $('#taskList').innerHTML=tasks.map(o=>'<div style="padding:16px 0;border-bottom:1px solid var(--line)"><strong>'+({TRYON:'试穿',RECOMMEND:'搭配推荐',SPLIT:'衣物整理',VALIDATE:'照片检查'}[o.kind]||'AI 任务')+'</strong><p style="margin:8px 0">'+escapeHTML(['queued','running'].includes(o.status)?'正在处理，可稍后回来查看':o.error||'任务未完成')+'</p>'+(['failed','unknown'].includes(o.status)?(o.kind==='SPLIT'?'<a href="wardrobe.html" class="btn btn-ghost">查看衣橱任务</a>':'<button class="btn btn-ghost" data-task-retry="'+o.operationId+'">重试</button>'):'')+'</div>').join('');
+ $('#taskList').querySelectorAll('[data-task-retry]').forEach(button=>button.onclick=async()=>{if(!confirm('重试可能再次消耗额度，继续吗？'))return;button.disabled=true;try{await Consent.ensure();await AI.submit('/api/ai/operations/'+button.dataset.taskRetry+'/retry',{});toast('任务已提交');}catch(e){if(!e.handled)toast(e.message);}finally{button.disabled=false;refreshTasks();}});
+ await CloudSync.run();
+}catch(e){if(key===LocalState.key&&epoch===LocalState.epoch)$('#taskList').textContent='任务状态暂时无法读取，可稍后重试';}finally{taskPolling=false;}}
+refreshTasks();setInterval(refreshTasks,5000);

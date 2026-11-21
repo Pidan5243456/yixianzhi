@@ -12,7 +12,7 @@
       AppAPI.request('/api/segment/jobs').then(r=>r.ok?r.json():null).then(data=>{
         if(!data||LocalState.locked||epoch!==LocalState.epoch||key!==LocalState.key)return;
         const existing=Store.get().pendingSegments||[],known=new Set(existing.map(j=>j.jobId));
-        const add=data.jobs.filter(j=>!known.has(j.jobId)&&j.status!=='error').map(j=>({...j,landed:[]}));
+        const add=data.jobs.filter(j=>!known.has(j.jobId)).map(j=>({...j,landed:[]}));
         if(add.length) {Store.set({pendingSegments:[...existing,...add]});pollSegmentJobs();}
       }).catch(()=>{});
     }

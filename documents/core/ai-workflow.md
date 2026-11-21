@@ -14,4 +14,4 @@
 
 产品故事和验收要求放 PRD；当前接口/字段放 contracts；当前能力与目标差异放业务模块；决策理由放 decisions；执行状态放 task-tracker；可复现证据放 testing。其他文档引用这些入口，避免多处复制状态。
 
-1.4.0 表示产品开发版本；schemaVersion:1 表示当前全量同步协议；dataVersion:2 表示业务快照结构；SQLite user_version:3 表示表结构迁移。任何一个数字都不能替代其他版本。
+1.4.0 表示产品开发版本；syncVersion:2 表示当前实体同步协议；schemaVersion:1 表示仅供迁移前旧客户端使用的全量协议；dataVersion:2 表示业务快照结构；SQLite user_version:4 表示表结构迁移。任何一个数字都不能替代其他版本。

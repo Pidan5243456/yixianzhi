@@ -15,7 +15,8 @@
     "android:sync": "npm run build:web && cap sync android",
     "test": "node --test tests/*.test.cjs",
     "test:product": "node scripts/check-product.cjs",
-    "test:sync": "node scripts/check-sync.cjs"
+    "test:sync": "node scripts/check-sync.cjs",
+    "test:release": "node scripts/check-release.cjs"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.2",

@@ -11,8 +11,8 @@
 | 服务 | Node.js 24、Express 4 | 一个进程、一份数据卷 |
 | 数据 | Node 内置 SQLite，WAL | 事务和版本检查；不是多实例数据库 |
 | 图片 | 服务端私有文件目录 | SQLite 保存归属、哈希、路径和大小 |
-| 本机 | IndexedDB 快照 | 按服务地址和账号隔离；目前图片仍内嵌于快照 |
-| AI | OpenRouter、DashScope 适配器 | 密钥仅在服务器；预算和授权接入尚未完成 |
+| 本机 | IndexedDB 快照与 Blob | 按服务地址和账号隔离；图片按哈希缓存 |
+| AI | OpenRouter、DashScope 适配器 | 密钥仅在服务器；操作、授权与逐次预算网关已接入 |
 | 验证 | node:test、Playwright、APK 校验脚本 | 使用临时数据与模型替身 |
 
 准确依赖版本以 [package.json](../../package.json) 和锁文件为准。模型名集中在 [config.js](../../server/ai/config.js)，这里只记录配置位置，不承诺第三方模型持续可用或固定价格。
@@ -23,7 +23,7 @@
 flowchart LR
   UI[Android WebView / 浏览器页面] --> Store[Store 页面状态]
   Store --> IDB[IndexedDB 账号快照]
-  Store --> Sync[CloudSync 全量同步 v1]
+  Store --> Sync[CloudSync 逐实体同步 v2]
   Sync --> API[Express 鉴权与版本校验]
   API --> DB[(SQLite 元数据)]
   API --> Media[私有图片文件]
@@ -34,9 +34,9 @@ flowchart LR
 
 手动添加衣物：相册/相机 → 本机压缩 → 编辑名称、类别、场景 → 保存快照 → 在线时推送账号状态。保存的是压缩后的展示图片，不保证保留手机原图。
 
-云端同步：客户端发送含图片的完整 JSON → 后端校验 `expectedVersion` → 图片按内容哈希写入私有目录 → `user_state` 保存 `media:` 引用 → 事务提交新版本。拉取时后端仍把图片还原为 data URL。**存储已拆分，网络传输尚未拆分。**
+云端同步：图片按哈希单独上传 → 实体携带 media: 引用和 expectedVersion → 服务端事务提交实体、变更标识和幂等回执。拉取仅传实体元数据；可见图片按需下载到账号 Blob 缓存。
 
-AI 拆图已使用服务端任务；推荐和试穿仍有直接请求链路。新的统一操作、预算、授权代码正在接入，不能把适配器存在视为真实 AI 已可用。
+AI 整理、推荐和试穿统一使用持久操作及预算网关。已完成图片先落盘，再在事务中提交记录和完成状态；重开页面查询原任务。测试使用供应商替身，真实模型及邮件配置由部署者填写后联调。
 
 ## 代码地图
 
@@ -50,14 +50,14 @@ AI 拆图已使用服务端任务；推荐和试穿仍有直接请求链路。�
 | `js/runtime.js`、`sync.js`、`ai.js` | 服务连接、认证请求、同步、AI 调用 |
 | `js/pages/` | 各页面业务交互 |
 | `server/server.js` | 路由、鉴权、请求大小、静态发布边界 |
-| `server/database.js`、`state.js` | 建表/升级、当前快照校验和媒体落盘 |
-| `server/ai-control.js`、`media.js` | 改造中的费用网关和独立媒体服务 |
+| `server/database.js`、`state.js` | 建表/升级、兼容快照与字段校验 |
+| `server/ai-control.js`、`actions.js`、`media.js` | 费用预留、用户动作幂等和独立媒体服务 |
 | `server/jobs.js`、`ai/` | 拆图任务和供应商适配 |
 | `android/` | 原生容器、文件导出插件、Android 资源 |
 | `scripts/`、`tests/` | 构建、流程验证、接口测试 |
 
-## 下一阶段边界
+## 数据与发布边界
 
-目标是逐条同步衣物、搭配和记录，图片单独上传、本机 Blob 缓存、按需下载。`entities` 等表已建，但 `/api/sync/*` 与客户端协议尚未接入。详见 [M4](../modules/m4-sync.md) 和 [数据库契约](../contracts/database.md)。
+当前已接入逐实体同步、独立图片上传和 Blob 缓存。变更日志保存标识，分页读取完整最新实体及其版本；并发新版本在下一轮允许重复拉取，客户端按版本去重。详见 [M4](../modules/m4-sync.md) 和 [数据库契约](../contracts/database.md)。
 
 `www/` 是生成目录，服务端只公开该目录。SQLite、密钥、参考仓库、文档和测试均不得进入 APK 的网页资源包。

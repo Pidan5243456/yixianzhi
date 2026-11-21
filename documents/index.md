@@ -30,7 +30,7 @@
 ## 协作与契约
 
 - [接口契约](contracts/api.md)
-- [数据库与数据字典](contracts/database.md)：现行快照、已建表和待接入实体模型。
+- [数据库与数据字典](contracts/database.md)：现行实体、私有媒体、任务和迁移。
 - [最近验证记录](testing/latest.md)：新仓库实际运行结果及未验证边界。
 - [任务看板](task-tracker.md)：当前阶段、剩余事项、验证证据。
 - [变更记录](changelog.md)：产品版本变化，不记录无关聊天历史。

@@ -12,19 +12,19 @@
 
 ## 本机状态与生命周期
 
-`LocalState` 使用 IndexedDB `yixianzhi` 的 `snapshots` 仓库，以 `AppAPI.scope|账号` 为分区。`scope` 区分不同后端和本地演示。内存中的 Store 是页面读写入口，快照写入、revision、dirty 等标记同事务保存。
+`LocalState` 使用 IndexedDB `yixianzhi` 的 `snapshots` 仓库，以 `AppAPI.scope|账号` 为分区。`scope` 区分不同后端和本地演示。内存中的 Store 是页面读写入口，快照、v2 基线/游标/冲突和新图片 Blob 同事务保存。
 
 `AppNav` 在内部链接、返回、退出前等待处理队列和保存队列。跨异步操作使用分区 key 与 epoch 防止旧账号响应写入新账号。
 
-仍须补齐：图片处理到最终提交的完整等待边界；切换服务/退出登录时的同等保护；bfcache 恢复后导航锁复位。现有测试通过不代表所有生命周期情况已覆盖。
+图片处理与提交进入等待队列；切换服务和退出先等待本机处理，bfcache 恢复时复位导航锁。远程生成不阻塞离开，由服务端持久保存。设备进程终止和厂商 WebView 行为仍需真机验证。
 
 ## 相册、相机与备份
 
 衣物页面通过文件 input 选择照片，通过 `capture` 请求系统拍摄；源文件前端限制 20 MB，压缩为最长边 1200 的展示副本。后端接受单张不超过 3 MiB 的 PNG/JPEG/WebP，并检查文件头。压缩后仍超限时不得显示云端已保存。
 
-[BackupPlugin.java](../../../android/app/src/main/java/com/yixianzhi/app/BackupPlugin.java) 使用系统 `ACTION_CREATE_DOCUMENT` 导出 JSON，不要求广泛存储权限。当前插件限制字符串长度 32 × 1024 × 1024，导入端按文件字节限制 30 MiB；这是旧版备份限制，不能声称支持导出全部 200 MiB 图片空间。
+[BackupPlugin.java](../../../android/app/src/main/java/com/yixianzhi/app/BackupPlugin.java) 使用系统 ACTION_CREATE_DOCUMENT。新版 .yxz 备份按 manifest、逐张媒体、结束记录写入；JS 逐块发送 64 KiB 字节，原生按会话/序号校验并写出，关闭流后才返回成功。图片总量上限 200 MiB、文件上限 300 MiB。旧 JSON 备份保留不超过 30 MiB 的兼容导入。
 
-目标备份需要 manifest 与媒体分离并支持大于 30 MiB 的资料，见 [M4](../../modules/m4-sync.md)。令牌不得进入备份。
+超过 30 MiB 的真实 PNG 备份已在浏览器和原生桥接替身中验证；真机 SAF 文件写入仍待验收。导入先暂存并检查哈希/数量/结束记录，事务提交前不替换现有资料。令牌不进入备份。
 
 ## 系统返回键
 

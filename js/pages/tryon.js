@@ -53,7 +53,7 @@
         if (tm) tm.content = stageCols[0];
       } catch {}
     };
-    im.src = src;
+    MediaCache.url(src).then(url=>im.src=url).catch(()=>{});
   }
 
   /* 舞台渲染：有 AI 生成图用生成图，否则模特图 + 衣服按分类叠放 */
@@ -72,12 +72,12 @@
     if (generating) {
       /* 生成等待中：整页遮罩盖住模特与抽屉；台上保留旧生成图（没有则模特底图），失败时旧图不丢 */
       if (genImage) {
-        wrap.innerHTML = `<img class="gen" src="${genImage}" alt="试穿效果">`;
+        wrap.innerHTML = `<img class="gen" src="${MediaCache.src(genImage)}" alt="试穿效果">`;
         syncStageBg(genImage);
       } else {
         const modelSrc = m.dataUrl || defaultModelSrc();
         syncStageBg(modelSrc);
-        wrap.innerHTML = `<img class="base" id="modelImg" src="${modelSrc}"
+        wrap.innerHTML = `<img class="base" id="modelImg" src="${MediaCache.src(modelSrc)}"
             onerror="this.onerror=null;this.src='assets/ph/model.svg'"
             style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣模特">`;
       }
@@ -86,7 +86,7 @@
     }
     if (genImage) {
       /* 生图模型已把鞋子一起生成，直接展示整图，不再前端叠鞋 */
-      wrap.innerHTML = `<img class="gen" src="${genImage}" alt="试穿效果">`;
+      wrap.innerHTML = `<img class="gen" src="${MediaCache.src(genImage)}" alt="试穿效果">`;
       syncStageBg(genImage);
       setLoading(false);
       return;
@@ -95,7 +95,7 @@
     syncStageBg(modelSrc);
     setLoading(false);
     const base = `<img class="base" id="modelImg"
-        src="${m.dataUrl || defaultModelSrc()}"
+        src="${MediaCache.src(m.dataUrl || defaultModelSrc())}"
         onerror="this.onerror=null;this.src='assets/ph/model.svg'"
         style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣模特">`;
     /* 线上真生成失败走不到叠图：doTryon 保留旧生成图并 toast，这里只剩"什么都没穿"的纯模特 */
@@ -105,17 +105,18 @@
       wearing.map(id => {
         const it = itemById(id);
         if (!it) return "";
-        return `<img class="worn cat-${it.cat} ${/^data:image\/jpeg;/.test(it.dataUrl || '') ? 'photo-layer' : ''}" src="${itemSrc(it)}"
+        return `<img class="worn cat-${it.cat} ${/^data:image\/jpeg;/.test(it.dataUrl || '') ? 'photo-layer' : ''}" src="${MediaCache.src(itemSrc(it))}"
           onerror="phFallback(this,'${safePh(it.ph)}')" alt="${escapeHTML(it.name)}">`;
       }).join("");
   }
 
-  /* ---------- 真实试穿：每次换装自动生成 ----------
+  /* ---------- 真实试穿：仅用户主动生成 ----------
      系统衣服/默认模特是图片文件，先转成 dataURL 再发给模型；
      衣服平铺图铺白底转 JPEG（透明 PNG 直接转会发黑）。转换结果缓存。 */
   const srcCache = new Map();
   function srcToDataUrl(src, maxW = 1000) {
     if (!src) return Promise.resolve(null);
+    if (src.startsWith("media:")) return MediaCache.data(src);
     if (src.startsWith("data:")) return Promise.resolve(src);
     if (srcCache.has(src)) return srcCache.get(src);
     const p = new Promise(resolve => {
@@ -160,22 +161,23 @@
     const current=()=>epoch===LocalState.epoch&&partition===LocalState.key&&!LocalState.locked;
     generating=true;renderStage();
     try {
-      let image=genCache.get(key),mock=false;
+      let image=null,mock=false,serverRecord=null;
       if(!image){
         const modelImage=snapshot.model.dataUrl||await srcToDataUrl(snapshot.base,1200);
         const items=await Promise.all(snapshot.items.map(async it=>({id:it.id,category:it.cat,image:await itemDataUrl(it)})));
         if(!current()||seq!==tryonSeq)return;
-        const r=await AI.tryon(modelImage,items);image=r.image;mock=!!r.mock;
+        const r=await AI.tryon(modelImage,items,{modelId:snapshot.model.id,outfitId:snapshot.outfitId||'',scene:outfitById(snapshot.outfitId)?.scene||'日常'});image=r.image;mock=!!r.mock;if(r.record)serverRecord=r.record;
         if(!image&&!mock)throw Error('未生成图片，请重试');
         if(image)genCache.set(key,image);
       }
       if(!current())return;
-      if(mock) image=await LocalState.prepare(()=>composeSnapshot(snapshot.model.dataUrl||snapshot.base,null,snapshot.items));
+      await LocalState.prepare(async()=>{
+        if(mock&&AppAPI.demo)image=await composeSnapshot(snapshot.model.dataUrl||snapshot.base,null,snapshot.items);
+        if(!current())return;
+        if(AppAPI.demo){const id='h_'+crypto.randomUUID();Store.set({history:[{id,outfitId:snapshot.outfitId,modelId:snapshot.model.id,items:snapshot.items.map(i=>i.id),time:snapshot.time,scene:'日常',image,kind:'collage'},...Store.get().history].slice(0,1000)});await LocalState.flush();}
+        // Remote records arrive through sync; a deleted result must never be reinserted here.
+      });
       if(!current())return;
-      // Save the immutable request, even if the user has changed the current preview.
-      const id='h_'+crypto.randomUUID();
-      Store.set({history:[{id,outfitId:snapshot.outfitId,modelId:snapshot.model.id,items:snapshot.items.map(i=>i.id),time:snapshot.time,scene:outfitById(snapshot.outfitId)?.scene||'其他',image,kind:mock?'collage':'tryon'},...Store.get().history].slice(0,1000)});
-      await LocalState.flush();
       if(seq===tryonSeq){genImage=mock?null:image;offlineOverlay=mock;toast(mock?'演示拼贴已保存':'试穿效果已保存');}
     }catch(e){if(current()&&!e.handled)toast(e.message||'生成失败，请重试');}
     finally{if(current()&&seq===tryonSeq){generating=false;renderStage();}}
@@ -195,7 +197,7 @@
       const im = new Image();
       im.onload = () => ok(im);
       im.onerror = no;
-      im.src = src;
+      MediaCache.url(src).then(url=>im.src=url).catch(no);
     });
   }
   /* baseSrc=底图（默认当前模特），cats=只画这些分类的衣服（默认全画） */
@@ -241,7 +243,7 @@
   /* ---------- 模特角标 ---------- */
   function renderModelBadge() {
     const m = curModel();
-    $("#modelSwitch").innerHTML = `<span class="model-crop"><img src="${m.dataUrl || defaultModelSrc()}" alt="切换试衣模特"></span>`;
+    $("#modelSwitch").innerHTML = `<span class="model-crop"><img src="${MediaCache.src(m.dataUrl || defaultModelSrc())}" alt="切换试衣模特"></span>`;
   }
   $("#modelSwitch").addEventListener("click", () => AppNav.go("create-model.html"));
 
@@ -291,7 +293,7 @@
       `<div class="dcell add" data-add role="button" tabindex="0" aria-label="上传衣服">${uiIcon('plus')}</div>` + localCard + splitCards +
       list.map(it => `
         <div class="dcell ${wearing.includes(it.id) ? "on" : ""}" data-i="${it.id}">
-          ${it.dataUrl ? `<img src="${it.dataUrl}">` : itemImg(it)}
+          ${it.dataUrl ? `<img src="${MediaCache.src(it.dataUrl)}">` : itemImg(it)}
         </div>`).join("");
     $$("[data-i]").forEach(c => c.addEventListener("click", () => wearItem(c.dataset.i)));
     bindSegRetry();
@@ -428,10 +430,7 @@
   renderCatChips(); renderSceneChipsD(); renderAll();
   applyTryon();
 
-  /* 手机返回本页常走 bfcache（页面连内存一起原样恢复、不重新加载），期间在创建模特页
-     换过模特的话台上还是旧人。恢复瞬间强制重读 localStorage：模特换了 → 作废旧生成图、
-     立即显示新模特并进加载态重新生成；没换 → applyTryon 命中缓存秒显原图，不产生费用。
-     （KEEP_BFCACHE：豁免 app.js 的全局刷新兜底——本页刷新会重复触发付费生成） */
+  /* Restore the current local partition without starting another AI operation. */
   window.KEEP_BFCACHE = true;
   window.addEventListener("pageshow", async e => {
     if (!e.persisted) return;

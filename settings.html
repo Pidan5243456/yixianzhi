@@ -72,7 +72,7 @@
 <link rel="stylesheet" href="css/prototype.css">
 <script src="js/build-config.js"></script>
 <script src="js/runtime.js"></script>
-<script src="js/persistence.js"></script>
+<script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="settings">
 <div class="app">
@@ -132,11 +132,12 @@
       </button>
       <div class="srow" style="cursor:default">
         <svg class="ric" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-        <span class="sl">隐私协议授权</span>
-        <label class="switch"><input type="checkbox" id="swPrivacy"></label>
+        <span class="sl">AI 处理授权</span>
+        <label class="switch"><input type="checkbox" id="swPrivacy" aria-label="AI 处理授权"></label>
       </div>
     </div>
 
+    <div class="sgroup"><div class="srow"><span class="sl">分享使用统计</span><label class="switch"><input type="checkbox" id="swAnalytics" aria-label="分享使用统计"></label></div></div>
     <!-- 重置演示数据 -->
     <div class="sgroup rise d3">
       <button class="srow" style="justify-content:center;color:var(--danger);font-weight:700" onclick="openModal('modalReset')">重置演示数据</button>
@@ -190,18 +191,6 @@
     <p><b>4. AI 生成内容</b>　试穿效果图由 AI 模型生成，仅供参考，可能与实际穿着效果存在差异。</p>
     <p><b>5. 合理使用</b>　请勿上传违法、侵权或含他人肖像且未经授权的图片。</p>
     <p><b>6. 条款更新</b>　正式版上线时我们将发布完整的服务条款与隐私政策，并在应用内提示你确认。</p>
-  </div>
-</div>
-
-<!-- 关闭隐私授权确认 -->
-<div class="modal-mask" id="modalPrivacy">
-  <div class="modal">
-    <h3>关闭隐私协议授权</h3>
-    <p>关闭后将无法使用 AI 试穿、智能搭配等需要照片处理的功能。确定关闭吗？</p>
-    <div style="display:flex;gap:12px">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalPrivacy')">取消</button>
-      <button class="btn btn-primary" style="flex:1" onclick="confirmPrivacyOff()">关闭</button>
-    </div>
   </div>
 </div>
 

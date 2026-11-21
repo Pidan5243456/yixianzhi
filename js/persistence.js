@@ -3,7 +3,7 @@ const LocalState = window.LocalState = {
   db:null, record:null, key:'', queue:Promise.resolve(), error:null, locked:false, epoch:0,
   fresh() { return {state:{},revision:0,dirty:false,seq:0,conflict:false,lastSync:null}; },
   async open() {
-    this.db=await new Promise((resolve,reject)=>{const r=indexedDB.open('yixianzhi',1);r.onupgradeneeded=()=>r.result.createObjectStore('snapshots');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+    this.db=await new Promise((resolve,reject)=>{const r=indexedDB.open('yixianzhi',2);r.onupgradeneeded=()=>{for(const name of ['snapshots','media'])if(!r.result.objectStoreNames.contains(name))r.result.createObjectStore(name);};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
     await this.load();
     // Import only an unambiguously owned, same-origin legacy snapshot. Keep the source.
     const old=localStorage.getItem('aiwd-state');
@@ -15,6 +15,7 @@ const LocalState = window.LocalState = {
   },
   async read(key) { return new Promise((resolve,reject)=>{const r=this.db.transaction('snapshots').objectStore('snapshots').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}); },
   async load() {
+    await this.drain();
     this.locked=true;
     const epoch=++this.epoch;
     if(typeof CloudSync!=='undefined') CloudSync.reset();
@@ -26,11 +27,13 @@ const LocalState = window.LocalState = {
     if(key!==partition()) return this.load();
     // Publish the partition and its snapshot together, after invalidating old requests.
     this.key=key;this.record=record;
+    MediaCache.reset();
     if(typeof Store!=='undefined') Store._cache=null;
     this.locked=false;return true;
   },
-  write(key,value) {
-    return new Promise((resolve,reject)=>{const tx=this.db.transaction('snapshots','readwrite');tx.objectStore('snapshots').put(value,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('存储事务中断'));});
+  async write(key,value) {
+    const encoded=await MediaCache.encode(value);
+    return new Promise((resolve,reject)=>{const tx=this.db.transaction(['snapshots','media'],'readwrite');for(const [id,b]of encoded.blobs)tx.objectStore('media').put(b,key+'|'+id);tx.objectStore('snapshots').put(encoded.value,key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('存储事务中断'));});
   },
   persist() {
     const key=this.key,copy=structuredClone(this.record);
@@ -47,14 +50,22 @@ const LocalState = window.LocalState = {
   async drain() {while(this.preparations.size)await Promise.all([...this.preparations]);},
   async flush() { await this.queue; if(this.error) throw this.error; },
   async backup(label='backup') { await this.write(this.key+'|'+label+'|'+Date.now(),structuredClone(this.record)); },
-  async activate(email,token) {
-    await this.flush();localStorage.setItem('yxz-active-account',email);
+  async activate(email,token,generation) {
+    await this.drain();await this.flush();localStorage.setItem('yxz-active-account',email);
     if(!await this.load()) throw new Error('会话已切换，请重新登录');
+    if(generation&&this.record.generation&&generation!==this.record.generation){await this.backup('previous-account');this.record=this.fresh();}
+    if(generation)this.record.generation=generation;
     this.record.state.account={...(this.record.state.account||{}),email,token};await this.persist();
     Store._cache=null;
   },
+  async erase(){await this.drain();await this.flush();this.locked=true;this.epoch++;CloudSync.reset();const key=this.key;
+    await new Promise((ok,no)=>{const tx=this.db.transaction(['snapshots','media'],'readwrite');for(const name of ['snapshots','media']){const r=tx.objectStore(name).openCursor();r.onsuccess=()=>{const c=r.result;if(c){if(c.key===key||String(c.key).startsWith(key+'|'))c.delete();c.continue();}};}tx.oncomplete=ok;tx.onerror=()=>no(tx.error);});
+    MediaCache.reset();localStorage.removeItem('yxz-active-account');location.replace('login.html');
+  },
   async logout() {
-    await this.flush();this.epoch++;CloudSync.reset();
+    await this.drain();await this.flush();
+    if(!AppAPI.demo&&this.record.state.account?.token){const r=await AppAPI.request('/api/auth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!r.ok&&r.status!==401)throw Error('退出失败，请重试');}
+    this.epoch++;CloudSync.reset();
     if(this.record.state.account) this.record.state.account.token='';await this.persist();
     localStorage.removeItem('yxz-active-account');await AppNav.go('login.html',true);
   }
@@ -82,12 +93,7 @@ document.addEventListener('click',e=>{
   e.preventDefault();AppNav.go(href);
 });
 function savedToast(msg) { const pending=LocalState.queue; pending.then(()=>toast(msg),()=>toast('保存失败，请重试保存或导出资料')); }
-async function exportBackup() {
-  // Export the newest in-memory snapshot even when the disk is full.
-  const data=JSON.stringify({format:'yixianzhi-backup',schemaVersion:1,exportedAt:new Date().toISOString(),state:CloudSync.snapshot()});
-  if(AppAPI.native) await window.Capacitor.registerPlugin('Backup').export({data});
-  else {const u=URL.createObjectURL(new Blob([data],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='yixianzhi-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),10000);}
-}
+async function exportBackup(){return Backup.export();}
 function showStorageRecovery() {
   if(document.getElementById('storageRecovery'))return;
   const box=document.createElement('div');box.id='storageRecovery';box.className='modal-mask show';

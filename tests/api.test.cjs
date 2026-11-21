@@ -10,7 +10,7 @@ const app=require('../server/server');
 const {db}=require('../server/database'),store=require('../server/store');
 let server,base,a,b;
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFhUAAAAASUVORK5CYII=';
-async function request(url,body={},token) {const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});return {status:r.status,body:await r.json()};}
+async function request(url,body={},token) {if(body&&(/\/api\/ai\/operations/.test(url)||/\/api\/segment\/(start|retry)$/.test(url)))body.actionId||=crypto.randomUUID();const r=await fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});return {status:r.status,body:await r.json()};}
 async function login(email) {const code=await request('/api/auth/send-code',{email});assert.equal(code.status,200);const result=await request('/api/auth/login',{email,code:code.body.devCode});assert.equal(result.status,200);return result.body.token;}
 before(async()=>{server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));base='http://127.0.0.1:'+server.address().port;a=await login('a@example.com');b=await login('b@example.com');});
 after(async()=>{await new Promise(r=>server.close(r));db.close();});
@@ -56,7 +56,7 @@ test('durable jobs: idempotency, owner check and stable item ids',async()=>{
 });
 test('database survives a process restart and completed task results remain',()=>{
  store.set('segjob:restart',{owner:'a@example.com',status:'running',ts:Date.now(),targets:[{state:'done'},{state:'running'}]},1800);
- const output=execFileSync(process.execPath,['-e',"require('./server/jobs');const d=require('./server/database');const s=require('./server/store');console.log(JSON.stringify({v:d.db.prepare('SELECT version FROM user_state WHERE email=?').get('a@example.com').version,job:s.get('segjob:restart')}));d.db.close();"],{cwd:path.resolve('.'),env:process.env,encoding:'utf8'});
+ const output=execFileSync(process.execPath,['-e',"require('./server/jobs');const d=require('./server/database');const s=require('./server/store');console.log(JSON.stringify({v:d.db.prepare('SELECT source_version FROM sync_migrations WHERE owner=?').get('a@example.com').source_version,job:s.get('segjob:restart')}));d.db.close();"],{cwd:path.resolve('.'),env:process.env,encoding:'utf8'});
  const r=JSON.parse(output.trim());assert.equal(r.v,2);assert.equal(r.job.status,'done');assert.equal(r.job.targets[0].state,'done');assert.equal(r.job.targets[1].state,'fail');
 });
 test('production never falls back to mock, including retry, and does not charge missing configuration',async()=>{
@@ -66,7 +66,7 @@ test('production never falls back to mock, including retry, and does not charge 
   const port=await new Promise((resolve,reject)=>{let text='';const timer=setTimeout(()=>reject(new Error('production startup timeout')),10000);child.stdout.on('data',b=>{text+=b;const m=/PORT:(\d+)/.exec(text);if(m){clearTimeout(timer);resolve(m[1]);}});child.on('error',reject);});
   const before=db.prepare("SELECT count(*) AS n FROM kv WHERE key LIKE 'quota:%'").get().n;
   for(const url of ['validate-photo','recommend','tryon','segment/start','segment/retry','segment-one']) {
-   const r=await fetch('http://127.0.0.1:'+port+'/api/'+url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+a},body:JSON.stringify({image:png,jobId:'missing',index:0})});assert.equal(r.status,503,url);
+   const r=await fetch('http://127.0.0.1:'+port+'/api/'+url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+a},body:JSON.stringify({image:png.replace('AAAAASUVORK5CYII=','AAAAASUVORK5CYIA='),requestId:'production-config-test',actionId:crypto.randomUUID(),jobId:'missing',index:0})});assert.equal(r.status,503,url);
   }
   assert.equal(db.prepare("SELECT count(*) AS n FROM kv WHERE key LIKE 'quota:%'").get().n,before);
   const mail=await fetch('http://127.0.0.1:'+port+'/api/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'production@example.com'})});assert.equal(mail.status,503);

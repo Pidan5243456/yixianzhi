@@ -1,13 +1,23 @@
-/* ============================================================
-   前端 AI 服务层
-   页面只调用 AI.segment / AI.tryon / AI.recommend 三个函数，
-   不关心背后是真模型还是占位实现。
-   优先请求后端 /api/*（后端里可替换成真模型 API）；
-   后端不在线时（比如双击 HTML 打开）自动回退到浏览器本地模拟，
-   保证任何情况下产品都能用。
-   ============================================================ */
+/* AI only starts after an explicit user action. Existing tasks are queried without replay. */
 
 const AI = {
+  async submit(path,body){if(LocalState.locked)throw Error('资料正在保存，请稍后重试');const actionId=body.actionId||crypto.randomUUID(),key=LocalState.key,epoch=LocalState.epoch;
+    Store.set({pendingAIActions:[...(Store.get().pendingAIActions||[]).slice(-99),{actionId,path,at:Date.now()}]});await LocalState.flush();if(key!==LocalState.key||epoch!==LocalState.epoch)throw Error('账号已切换');
+    const result=await this._post(path,{...body,actionId});if(key!==LocalState.key||epoch!==LocalState.epoch||LocalState.locked)throw Error('账号已切换，原任务可在原账号中查看');Store.set({pendingAIActions:(Store.get().pendingAIActions||[]).filter(a=>a.actionId!==actionId)});await LocalState.flush();if(key!==LocalState.key||epoch!==LocalState.epoch||LocalState.locked)throw Error('账号已切换');return result;
+  },
+  async operation(kind,input){
+    const key=LocalState.key,epoch=LocalState.epoch,current=()=>key===LocalState.key&&epoch===LocalState.epoch&&!LocalState.locked;await Consent.ensure();if(!current())throw Error('账号已切换');
+    const encoded=await MediaCache.upload(input,current,{force:true});if(!current())throw Error('资料已切换');let op;
+    try{op=await this.submit('/api/ai/operations',{kind,input:encoded});}
+    catch(e){if(e.code!=='AI_RETRY_REQUIRED'||!confirm('上次任务结果未确认。重试可能再次消耗额度，是否继续？'))throw e;op=await this.submit('/api/ai/operations',{kind,input:encoded,retry:true});}
+    if(!current())throw Error('账号已切换');const id=op.operationId;Store.set({pendingOperations:[...new Set([...(Store.get().pendingOperations||[]),id])]});await LocalState.flush();
+    for(let i=0;i<240;i++){
+      if(!current())throw Error('任务已提交，可在试穿记录中查看');
+      if(op.status==='done'){if(op.deleted)throw Error('此结果已删除');await CloudSync.run({pull:true});return op;}
+      if(['failed','unknown'].includes(op.status))throw Error(op.error||'任务未完成，请查看记录后决定是否重试');
+      await new Promise(r=>setTimeout(r,1500));const r=await AppAPI.request('/api/ai/operations/'+encodeURIComponent(id));op=await r.json();if(!r.ok)throw Error(op.error||'任务查询失败');
+    }throw Error('任务仍在处理，可稍后在试穿记录查看');
+  },
   _online: null,   // 后端是否在线（null=未探测）
 
   async _post(path, body, timeout = 30000) {
@@ -38,7 +48,7 @@ const AI = {
           toast(data.error || "请先登录后使用 AI 功能");
           err.handled = true;
         }
-        throw err;
+        err.status=resp.status;err.code=data.code;throw err;
       }
       return await resp.json();
     } finally {
@@ -53,7 +63,7 @@ const AI = {
   async validatePhoto(image) {
     if (await this.available()) {
       try {
-        return await this._post("/api/validate-photo", { image }, 60000);
+        return await this.operation("VALIDATE", {image});
       } catch (e) { throw e; }
     }
     return { pass: true, fail_reasons: [], primary_reason: "", mock: true };
@@ -81,22 +91,22 @@ const AI = {
      离线 → { local }：无后台队列，返回本地模拟结果，调用方即时入橱 */
   async segmentStart(image, requestId = crypto.randomUUID()) {
     if (await this.available()) {
-      return await this._post("/api/segment/start", { image, requestId }, 30000);
+      const key=LocalState.key,epoch=LocalState.epoch,current=()=>key===LocalState.key&&epoch===LocalState.epoch&&!LocalState.locked;await Consent.ensure();if(!current())throw Error('账号已切换');const encoded=await MediaCache.upload({image},current,{force:true});if(!current())throw Error('账号已切换');try{return await this.submit('/api/segment/start',{...encoded,requestId});}catch(e){if(e.code!=='AI_RETRY_REQUIRED'||!confirm('上次整理未完成。重新提交可能消耗额度，继续吗？'))throw e;return this.submit('/api/segment/start',{...encoded,requestId,retry:true});}
     }
     return { local: { image, items: [{ image, category: "上衣", name: "我的单品" }], mock: true } };
   },
 
   /* 拆分单件重试：把任务里 fail 的一件重新排队，进度由轮询接管 */
   async segmentRetry(jobId, index) {
-    return await this._post("/api/segment/retry", { jobId, index }, 15000);
+    await Consent.ensure();if(!confirm('重试可能再次消耗额度，继续吗？'))throw Object.assign(Error('已取消'),{handled:true});return await this.submit('/api/segment/retry',{jobId,index});
   },
 
   /* ---------- ② 虚拟试穿 ----------
      返回 { image } —— image 为 null 时由页面用本地叠图合成兜底 */
-  async tryon(modelImage, items) {
+  async tryon(modelImage, items, meta={}) {
     if (await this.available()) {
       try {
-        return await this._post("/api/tryon", { modelImage, items }, 240000);
+        return await this.operation("TRYON", {modelImage,items,...meta});
       } catch (e) {
         /* 后端在线但本次请求失败（网络闪断/服务重启/5xx）＝真失败，
            不带 mock——mock 只标记"无密钥/后端不在线"的预期降级 */
@@ -119,7 +129,7 @@ const AI = {
     };
     if (await this.available()) {
       try {
-        const r = await this._post("/api/recommend", payload);
+        const r = await this.operation("RECOMMEND", payload);
         if (r && Array.isArray(r.items) && r.items.length) return r;
       } catch (e) { throw e; }
     }
