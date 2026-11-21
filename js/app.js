@@ -131,10 +131,15 @@ function allItems() {
 function itemById(id) {
   return Store.get().deletedItems.includes(id) ? undefined : allItems().find(i => i.id === id);
 }
+const PRESET_GARMENT_IDS = Object.freeze(['f-daily-02-top','f-daily-02-bottom','f-date-08-shoes','m-daily-01-top','m-daily-01-bottom','m-daily-01-shoes']);
+function presetItems() { const hidden=new Set(Store.get().deletedItems);return PRESET_GARMENT_IDS.map(id=>ITEMS.find(i=>i.id===id)).filter(i=>i&&!hidden.has(i.id)); }
+function isPresetItem(id) { return PRESET_GARMENT_IDS.includes(id)&&!inWardrobe(id); }
+function selectableItems() { return [...new Map([...wardrobeItems(),...presetItems()].map(i=>[i.id,i])).values()]; }
+function recommendationItems(around=null) { const mine=wardrobeItems();return around&&isPresetItem(around)?presetItems():mine.length?mine:presetItems(); }
 function wardrobeItems() {
   const s = Store.get();
   /* 用户自己上传的衣服排在最前面 */
-  return [...s.customItems, ...ITEMS.filter(i => s.wardrobe.includes(i.id))];
+  return [...s.customItems, ...ITEMS.filter(i => s.wardrobe.includes(i.id))].filter(i=>!s.deletedItems.includes(i.id));
 }
 function inWardrobe(id) {
   const s = Store.get();

@@ -246,3 +246,8 @@ button:focus-visible,a:focus-visible,[role=button]:focus-visible {outline:2px so
 .outfit-open{border:0;padding:0;width:100%;text-align:left;background:transparent;color:inherit;cursor:pointer}.outfit-open h3{font-size:14px;font-weight:600;margin:12px 0 0;overflow-wrap:anywhere}.outfit-open:focus-visible{outline:2px solid var(--ink);outline-offset:4px}.product-empty{grid-column:1/-1}.missing-piece{display:inline-block;font-size:13px;color:var(--muted);padding:10px 0}.ocard .star{min-width:44px;min-height:44px}.ocard .try-pill{padding:10px 8px;min-height:44px;margin-left:6px;font-size:12px}
 .tryon-actions{position:absolute;bottom:34px;left:14px;right:14px;z-index:6;display:flex;gap:7px}.tryon-actions .btn{flex:1;padding:10px 4px;min-height:44px;font-size:13px;white-space:nowrap;background:#fff}.tryon-actions .btn-primary{background:var(--accent);color:var(--ink)}.preview-kind{position:absolute;left:18px;top:76px;z-index:4;font-size:13px;padding:6px 10px;background:#ffffffde;border-radius:12px}
 [data-page=tryon] .gen-loading{position:absolute;inset:auto 14px 90px;max-width:none;flex-direction:row;padding:10px;border-radius:14px;background:#fffffff0;backdrop-filter:none;z-index:4;pointer-events:none;font-size:13px}.gen-loading .spinner{width:20px;height:20px}
+
+/* Catalog items are available to try without claiming ownership. */
+.preset-badge{position:absolute;top:10px;left:10px;z-index:2;border-radius:7px;padding:4px 7px;background:#fff;color:#555;font-size:11px;line-height:1.2;pointer-events:none}.dcell .preset-badge{top:5px;left:5px;font-size:10px;padding:3px 5px}
+
+#missingItems{margin:8px var(--pad);display:block}#missingItems[hidden]{display:none}

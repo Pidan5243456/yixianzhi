@@ -21,24 +21,27 @@
     function render() {
       const its = items.map(itemById).filter(Boolean);
       const changed = items.join(",") !== o.items.join(",");
+      const missing=items.length-its.length;$("#missingItems").hidden=!missing;$("#missingItems").textContent=missing ? `有 ${missing} 件衣物已移除，可在编辑搭配中重新选择。` : "";
       if(!its.length){$("#hero").innerHTML="<p>这套搭配的衣物已移除</p>";$("#pieces").innerHTML="";return;}
       $("#hero").innerHTML = `
         <div class="main" data-p="${its[0].id}">${itemImg(its[0])}</div>
         <div class="side">${its.slice(1, 4).map(i =>
           `<span data-p="${i.id}">${itemImg(i)}</span>`).join("")}</div>
-        ${changed ? "" : outfitCover(o.id)}`;
+        ${changed || missing ? "" : outfitCover(o.id)}`;
       $("#pieces").innerHTML = its.map(i => `
         <div class="piece" data-p="${i.id}">${itemImg(i)}</div>`).join("");
       $$("[data-p]").forEach(el => el.addEventListener("click", () => openSwap(el.dataset.p)));
     }
 
     /* 点击单品 → 弹替换弹窗（同分类：默认单品 + 用户上传的） */
-    let swapFrom = null, swapTo = null;
+    let swapFrom = null, swapTo = null, swapOptions = "";
     function openSwap(id) {
       swapFrom = id; swapTo = null;
       const it = itemById(id);
+      if(!it){closeSheet('sheetSwap');render();return;}
       $("#swapTitle").childNodes[0].textContent = `替换${it.cat}`;
-      const options = wardrobeItems().filter(x => x.cat === it.cat && x.id !== id);
+      const options = selectableItems().filter(x => x.cat === it.cat && x.id !== id);
+      swapOptions=options.map(x=>x.id).join("|");
       $("#swapGrid").innerHTML = options.length ? options.map(x => `
         <div class="swap-cell" data-s="${x.id}">${itemImg(x)}</div>`).join("")
         : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0;font-size:15px;line-height:2">衣橱里没有其他${it.cat}<br>去底部 + 号上传吧</div>`;
@@ -50,7 +53,7 @@
       openSheet("sheetSwap");
     }
     $("#btnSwapOk").addEventListener("click", () => {
-      if (!swapTo) { toast("请先选择要替换的单品"); return; }
+      if (!swapTo || !itemById(swapTo)) { toast("请先选择可用的单品"); return; }
       items = items.map(i => (i === swapFrom ? swapTo : i));
       closeSheet("sheetSwap");
       render();
@@ -78,5 +81,6 @@
       AppNav.go(changed ? `tryon.html?items=${items.join(",")}` : `tryon.html?outfit=${o.id}`);
     });
 
+    window.addEventListener('data-synced',()=>{render();syncFav();if($('#sheetSwap').classList.contains('show')&&swapFrom){const from=itemById(swapFrom);if(!from){closeSheet('sheetSwap');return;}const ids=selectableItems().filter(x=>x.cat===from.cat&&x.id!==swapFrom).map(x=>x.id).join('|');if(ids!==swapOptions){const selected=swapTo;openSwap(swapFrom);const cell=$$('[data-s]').find(c=>c.dataset.s===selected);if(cell){swapTo=selected;cell.classList.add('on');}}}});
     render(); syncFav();
   }

@@ -283,7 +283,7 @@
     }));
   }
   function renderMineGrid() {
-    const list = wardrobeItems().filter(i => cFilter === "全部" || i.cat === cFilter);
+    const list = selectableItems().filter(i => cFilter === "全部" || i.cat === cFilter);
     /* 后台拆分任务进度卡：跨页面由轮询快照驱动（segCardList/segCardInner 在 app.js，衣橱页同款） */
     const localCard = localScan
       ? `<div class="dcell scan"><div class="split-prog"><span class="spname">AI 识别中…</span><div class="spbar"><i style="width:30%"></i></div></div></div>`
@@ -293,7 +293,7 @@
       `<div class="dcell add" data-add role="button" tabindex="0" aria-label="上传衣服">${uiIcon('plus')}</div>` + localCard + splitCards +
       list.map(it => `
         <div class="dcell ${wearing.includes(it.id) ? "on" : ""}" data-i="${it.id}">
-          ${it.dataUrl ? `<img src="${MediaCache.src(it.dataUrl)}">` : itemImg(it)}
+          ${it.dataUrl ? `<img src="${MediaCache.src(it.dataUrl)}">` : itemImg(it)}${isPresetItem(it.id)?'<span class="preset-badge">预设</span>':''}
         </div>`).join("");
     $$("[data-i]").forEach(c => c.addEventListener("click", () => wearItem(c.dataset.i)));
     bindSegRetry();
@@ -317,6 +317,7 @@
   /* 穿上单品：同分类替换，连体裙与上/下装互斥 */
   function wearItem(id) {
     const it = itemById(id);
+    if(!it){renderMineGrid();toast('这件衣物已移除');return;}
     const same = wearing.find(w => itemById(w)?.cat === it.cat);
     const takenOff = same === id;                       /* 点已穿的同一件 = 脱下 */
     if (takenOff) { wearing = wearing.filter(w => w !== id); }
@@ -326,20 +327,21 @@
       if (["上衣", "下装"].includes(it.cat)) wearing = wearing.filter(w => itemById(w)?.cat !== "连体裙");
       wearing = [...wearing, id];
     }
+    aiAround = takenOff ? null : id;
     curOutfitId = null;                                 /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
     renderAll(); applyTryon();
     savedToast(takenOff ? `已脱下「${it.name}」` : `已换上「${it.name}」`);
   }
 
   /* ---------- AI 搭配 ---------- */
-  function hasUploads() { return wardrobeItems().length > 0; }
+  function hasUploads() { return selectableItems().length > 0; }
   function syncAIBtn() { $("#btnAI").classList.toggle("off", !hasUploads()); }
 
   async function aiMatch(around) {
     const btn = $("#btnAI");
     if (btn.disabled) return;            /* 搭配请求进行中，连点不再重复调用付费模型 */
     const seq=tryonSeq,epoch=LocalState.epoch,key=LocalState.key;
-    const input=structuredClone(wardrobeItems());
+    const input=structuredClone(recommendationItems(around));
     btn.disabled = true;
     btn.innerHTML = uiIcon('sparkles') + ' AI 搭配中…';
     Track.send("recommend_click", { around: !!around });
@@ -366,10 +368,10 @@
 
   $("#btnAI").addEventListener("click", () => {
     if (!hasUploads()) {
-      toast("衣橱里还没有你的衣服，先上传一件再试试吧");
+      toast("没有可搭配的衣物，请先添加");
       return;
     }
-    aiMatch(null);
+    aiMatch(aiAround && itemById(aiAround) ? aiAround : null);
   });
 
   /* 从衣橱带单品进来：围绕它自动 AI 搭配（先进加载态，不闪临时叠图） */
@@ -424,9 +426,16 @@
   grabEl.addEventListener("pointerup", gEnd);
   grabEl.addEventListener("pointercancel", gEnd);
 
+  let displayedModelId=Store.get().curModel;
   function renderAll() {
+    displayedModelId=Store.get().curModel;
     renderStage(); renderOutfitGrid(); renderMineGrid(); renderModelBadge(); syncFav(); syncAIBtn();
   }
+  window.addEventListener('data-synced',()=>{
+    const available=wearing.filter(id=>itemById(id)),changed=available.length!==wearing.length||displayedModelId!==Store.get().curModel;
+    wearing=available;if(aiAround&&!itemById(aiAround))aiAround=null;
+    if(changed)applyTryon();renderAll();
+  });
   renderCatChips(); renderSceneChipsD(); renderAll();
   applyTryon();
 
