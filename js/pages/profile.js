@@ -3,7 +3,7 @@
   renderTabbar("me");
 
   const p = Store.get().profile;
-  $("#usub").textContent = [p.gender, p.job].filter(Boolean).join(" · ") || "点右侧设置完善资料";
+  $("#usub").textContent = [p.gender, p.job].filter(Boolean).join(" · ") || "";
 
   /* 昵称/头像来自设置页的账号资料，没设置过用默认 */
   const acc = Store.get().account || {};
@@ -39,8 +39,8 @@
              onclick="AppNav.go('create-model.html')">
           <span style="width:56px;height:56px;border-radius:50%;background:var(--ink);color:#fff;
                        display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px">＋</span>
-          <span style="font-size:16px;font-weight:700">上传照片，创建我的模特</span>
-          <span style="font-size:13px;color:var(--muted)">用自己的照片试穿衣橱里的衣服</span>
+          <span style="font-size:16px;font-weight:700">添加试衣照片</span>
+          <span style="font-size:13px;color:var(--muted)"></span>
         </div>`;
       $("#modelName").textContent = "";
       $("#modelStrip").innerHTML = "";
@@ -68,7 +68,7 @@
     $("#btnDelModel")?.addEventListener("click", () => {
       const left = s.models.filter(m => m.id !== cur.id);
       Store.set({ models: left, curModel: left[0].id });
-      savedToast("已删除该模特");
+      savedToast("已删除这张照片");
       renderModels();
     });
   }

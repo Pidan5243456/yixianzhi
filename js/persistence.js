@@ -97,7 +97,7 @@ async function exportBackup(){return Backup.export();}
 function showStorageRecovery() {
   if(document.getElementById('storageRecovery'))return;
   const box=document.createElement('div');box.id='storageRecovery';box.className='modal-mask show';
-  box.innerHTML='<div class="modal"><h3>本机保存失败</h3><p>最新资料仍在当前页面内存中。可以重试保存，或先导出备份。</p><button class="btn btn-primary btn-block" data-retry>重试保存</button><button class="btn btn-ghost btn-block" style="margin-top:12px" data-export>导出当前资料</button><button class="btn btn-ghost btn-block" style="margin-top:12px" data-close>留在当前页</button></div>';
+  box.innerHTML='<div class="modal"><h3>本机保存失败</h3><p>最新修改还没存好，请先留在这一页，重试保存或导出备份。</p><button class="btn btn-primary btn-block" data-retry>重试保存</button><button class="btn btn-ghost btn-block" style="margin-top:12px" data-export>导出当前资料</button><button class="btn btn-ghost btn-block" style="margin-top:12px" data-close>留在当前页</button></div>';
   box.querySelector('[data-retry]').onclick=async()=>{try{await LocalState.persist();box.remove();toast('已保存');}catch{toast('仍无法保存，请导出备份');}};
   box.querySelector('[data-export]').onclick=()=>exportBackup().then(()=>toast('已导出当前资料'),e=>toast(e.message));
   box.querySelector('[data-close]').onclick=()=>box.remove();document.body.append(box);

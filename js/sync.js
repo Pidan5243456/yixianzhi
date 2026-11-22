@@ -44,7 +44,7 @@ const CloudSync={
    if(!current())return;await this.pull(current);if(!current())return;
    local=await this.local();if(!current())return;r.dirty=[...new Set([...Object.keys(local),...Object.keys(m.base)])].some(k=>!this.same(local[k]||{deleted:true},m.base[k]||{deleted:true}));
    r.lastSync=Date.now();r.conflict=Object.keys(m.conflicts).length>0;await LocalState.persist();
-   this.status(r.conflict?'部分记录有冲突，请逐条选择':r.dirty?'本机有新修改，等待同步':'已同步到服务');if(r.dirty&&!r.conflict)this.schedule();
+   this.status(r.conflict?'有些记录在本机和云端不同，请逐条选择要保留的版本':r.dirty?'本机有新修改，等待同步':'已同步到衣先知服务');if(r.dirty&&!r.conflict)this.schedule();
   }catch(e){if(current())this.status('未同步：'+e.message+'。本机资料已保留');}
   finally{if(this.activeRun===run)this.busy=false;}
  },

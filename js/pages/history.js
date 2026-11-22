@@ -24,7 +24,7 @@
              <div class="fit"><img src="assets/ph/model.svg" alt="试衣照"></div>`}
         <span style="position:absolute;bottom:6px;left:6px;background:#fff;padding:3px 6px;border-radius:6px;font-size:11px">${h.kind==='collage'?'演示拼贴':h.kind==='tryon'?'AI 试穿':'旧版记录'}</span><span class="ck"></span>
       </div>`).join("")
-      : `<div class="empty" style="grid-column:1/-1"><span class="empty-visual">${uiIcon("photo")}</span><h3>还没有试穿记录</h3>你的试穿记录会保存在这里<br><a href="home.html" class="btn btn-primary">去试穿</a></div>`;
+      : `<div class="empty" style="grid-column:1/-1"><span class="empty-visual">${uiIcon("photo")}</span><h3>还没有试穿记录</h3><br><a href="home.html" class="btn btn-primary">去试穿</a></div>`;
 
     $$(".hcard").forEach(c => c.addEventListener("click", () => {
       const id = c.dataset.id;

@@ -22,8 +22,8 @@ const AI = {
   async capabilities(){if(AppAPI.demo)return {TRYON:{available:false,reason:'本地模式仅支持搭配拼图'},CUTOUT:{available:false,reason:'本地模式未连接图片处理服务'},INSPECT:{available:false},RECOMMEND:{available:false}};
     try{const r=await AppAPI.request('/api/ai/capabilities');if(!r.ok)throw Error();return (await r.json()).capabilities;}catch{return Object.fromEntries(['TRYON','CUTOUT','INSPECT','RECOMMEND'].map(k=>[k,{available:false,reason:'AI 服务暂时无法连接'}]));}},
   async requireCapability(kind){const guard=this.guard(),cap=(await this.capabilities())[kind];guard();if(!cap?.available)throw Error(cap?.reason||'此 AI 功能暂不可用');},
-  async inspect(image,purpose,target){const r=await this.operation('INSPECT',{image,purpose,target});if(r.inspection!=='passed')throw Error((r.inspection==='needs_selection'?'照片中有多个目标，请换成单件衣物或单人照片。':'照片暂不适合处理。')+(r.reason||''));return r.operationId;},
-  async cutout(item){const guard=this.guard();await this.requireCapability('CUTOUT');guard();if(!confirm('会先检查这张照片，再去除衣物背景。检查和去背景均可能消耗额度；有效检查会复用。继续？'))throw Object.assign(Error('已取消'),{handled:true});
+  async inspect(image,purpose,target){const r=await this.operation('INSPECT',{image,purpose,target});if(r.inspection!=='passed')throw Error((r.inspection==='needs_selection'?'照片里有多件衣物或多个人，请换一张只拍一件衣服或一个人的照片。':'这张照片不适合继续处理。')+(r.reason||''));return r.operationId;},
+  async cutout(item){const guard=this.guard();await this.requireCapability('CUTOUT');guard();if(!confirm('先检查照片，再去背景；这两步都可能消耗额度。有可复用的检查结果时会直接使用；重新检查仍可能消耗额度。继续？'))throw Object.assign(Error('已取消'),{handled:true});
     const key=LocalState.key,epoch=LocalState.epoch;await CloudSync.run();if(key!==LocalState.key||epoch!==LocalState.epoch||LocalState.locked)throw Error('账号已切换');
     const input={image:item.originalImage||item.dataUrl,purpose:'garment',target:item.cat,itemId:item.id};input.inspectionId=await this.inspect(input.image,'garment',item.cat);if(key!==LocalState.key||epoch!==LocalState.epoch||LocalState.locked)throw Error('账号已切换');return this.operation('CUTOUT',input);},
   _online: null,   // 后端是否在线（null=未探测）
@@ -116,7 +116,7 @@ const AI = {
     if (!AppAPI.demo) {
       try {
         await this.requireCapability('TRYON');entryGuard();
-        if(!confirm('会检查人物照和所选衣物，再生成试穿图。最多 '+(items.length+1)+' 次照片检查及 1 次生成；有效检查和已有结果会复用。继续？'))throw Object.assign(Error('已取消'),{handled:true});
+        if(!confirm('先检查人物照和所选衣物，再生成试穿图。最多 '+(items.length+1)+' 次照片检查和 1 次生成，均可能消耗额度。有可复用的结果时会直接使用；重新检查或生成仍可能消耗额度。继续？'))throw Object.assign(Error('已取消'),{handled:true});
         const key=LocalState.key,epoch=LocalState.epoch,current=()=>key===LocalState.key&&epoch===LocalState.epoch&&!LocalState.locked;
         const inspectionId=await this.inspect(modelImage,'person','full_body');const checked=[];
         for(const item of items){if(!current())throw Error('账号已切换');checked.push({...item,inspectionId:await this.inspect(item.image,'garment',item.category)});}if(!current())throw Error('账号已切换');

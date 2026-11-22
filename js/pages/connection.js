@@ -21,7 +21,7 @@
 function renderSyncStatus() {
   document.getElementById('syncStatus').textContent=AppAPI.demo?'本地演示：资料已保存到本机':CloudSync.message;
   const box=document.getElementById('conflictActions');box.hidden=!LocalState.record.conflict;
-  box.innerHTML=Object.entries(LocalState.record.v2?.conflicts||{}).map(([key,e])=>'<div style="padding:14px 0;border-bottom:1px solid var(--line)"><p>'+escapeHTML(e.data?.name||e.id)+' · '+(e.deleted?'云端已删除':'两端都有修改')+'</p><button class="btn btn-ghost" data-conflict="'+escapeHTML(key)+'" data-choice="cloud">采用云端</button><button class="btn btn-ghost" data-conflict="'+escapeHTML(key)+'" data-choice="local">保留本机</button></div>').join('');
+  box.innerHTML=Object.entries(LocalState.record.v2?.conflicts||{}).map(([key,e])=>'<div style="padding:14px 0;border-bottom:1px solid var(--line)"><p>'+escapeHTML(e.data?.name||e.id)+' · '+(e.deleted?'云端已删除':'本机和云端都有修改')+'</p><button class="btn btn-ghost" data-conflict="'+escapeHTML(key)+'" data-choice="cloud">使用云端版本</button><button class="btn btn-ghost" data-conflict="'+escapeHTML(key)+'" data-choice="local">保留本机版本</button></div>').join('');
   box.querySelectorAll('[data-conflict]').forEach(b=>b.onclick=async()=>{try{await CloudSync.resolve(b.dataset.conflict,b.dataset.choice);renderSyncStatus();}catch(e){toast(e.message);}});
 }
 window.addEventListener('sync-status',renderSyncStatus);renderSyncStatus();

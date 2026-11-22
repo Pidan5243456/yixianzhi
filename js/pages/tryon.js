@@ -94,7 +94,7 @@
         syncStageBg(modelSrc);
         wrap.innerHTML = `<img class="base" id="modelImg" src="${MediaCache.src(modelSrc)}"
             onerror="this.onerror=null;this.src='assets/ph/model.svg'"
-            style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣模特">`;
+            style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣照片">`;
       }
       setLoading(true);
       return;
@@ -112,7 +112,7 @@
     const base = `<img class="base" id="modelImg"
         src="${MediaCache.src(m.dataUrl || defaultModelSrc())}"
         onerror="this.onerror=null;this.src='assets/ph/model.svg'"
-        style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣模特">`;
+        style="${m.dataUrl ? "border-radius:18px" : ""}" alt="试衣照片">`;
     /* 线上真生成失败走不到叠图：doTryon 保留旧生成图并 toast，这里只剩"什么都没穿"的纯模特 */
     if (!offlineOverlay) { wrap.innerHTML = base; return; }
     /* 无密钥/后端不在线的演示模式：平铺叠图保底，双击 HTML 也能用 */
@@ -258,7 +258,7 @@
   /* ---------- 模特角标 ---------- */
   function renderModelBadge() {
     const m = curModel();
-    $("#modelSwitch").innerHTML = `<span class="model-crop"><img src="${MediaCache.src(m.dataUrl || defaultModelSrc())}" alt="切换试衣模特"></span>`;
+    $("#modelSwitch").innerHTML = `<span class="model-crop"><img src="${MediaCache.src(m.dataUrl || defaultModelSrc())}" alt="切换试衣照片"></span>`;
   }
   $("#modelSwitch").addEventListener("click", () => AppNav.go("create-model.html"));
 
@@ -283,7 +283,7 @@
       const o = outfitById(c.dataset.o);
       wearing = o.items.filter(id=>itemById(id)); curOutfitId = o.id; outfitContext=WardrobeModel.context(o.context||{scene:o.scene});ruleReason=""; /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
       renderAll(); applyTryon();
-      savedToast(`已试穿「${o.name}」`);
+      savedToast(`已打开搭配「${o.name}」`);
     }));
     bindAdd();
   }
@@ -346,12 +346,12 @@
     ruleReason="";aiAround = takenOff ? null : id;
     curOutfitId = null;                                 /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
     renderAll(); applyTryon();
-    savedToast(takenOff ? `已脱下「${it.name}」` : `已换上「${it.name}」`);
+    savedToast(takenOff ? `已取消选择「${it.name}」` : `已选中「${it.name}」`);
   }
 
   /* ---------- AI 搭配 ---------- */
   function hasUploads() { return selectableItems().length > 0; }
-  function syncAIBtn() { $('#btnAI').disabled=!hasUploads()||!aiCaps.RECOMMEND?.available;$('#btnAI').textContent=aiCaps.RECOMMEND?.available?'AI 推荐':'AI 推荐未开通';$('#btnAI').title=aiCaps.RECOMMEND?.reason||''; }
+  function syncAIBtn() { $('#btnAI').disabled=!hasUploads()||!aiCaps.RECOMMEND?.available;$('#btnAI').textContent=aiCaps.RECOMMEND?.available?'AI 推荐':'AI 推荐暂不可用';$('#btnAI').title=aiCaps.RECOMMEND?.reason||''; }
 
   async function aiMatch(around) {
     const btn = $("#btnAI");
@@ -359,7 +359,7 @@
     const seq=tryonSeq,epoch=LocalState.epoch,key=LocalState.key;
     const input=structuredClone(recommendationItems(around));
     btn.disabled = true;
-    btn.innerHTML = uiIcon('sparkles') + ' AI 搭配中…';
+    btn.innerHTML = uiIcon('sparkles') + ' AI 正在选搭…';
     Track.send("recommend_click", { around: !!around });
     try {
       const r = await AI.recommend(input, around, outfitContext);
@@ -371,9 +371,9 @@
         await applyTryon();
         toast(r.reason
           ? r.reason
-          : (around ? "AI 已围绕这件衣服完成搭配" : "AI 已为你搭配一套新造型"));
+          : (around ? "已选好能和这件衣服搭配的单品" : "已选好一套搭配"));
       } else {
-        toast("衣橱里的衣服不够搭一套，先多上传几件吧");
+        toast("衣服还不够搭成一套，可以再添加几件。");
       }
     } catch(e) {if(!e.handled)toast(e.message||"推荐失败，请重试");
     } finally {

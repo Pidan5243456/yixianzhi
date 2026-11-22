@@ -46,7 +46,7 @@
       swapOptions=options.map(x=>x.id).join("|");
       $("#swapGrid").innerHTML = options.length ? options.map(x => `
         <div class="swap-cell" data-s="${x.id}">${itemImg(x)}</div>`).join("")
-        : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0;font-size:15px;line-height:2">衣橱里没有其他${it.cat}<br>去底部 + 号上传吧</div>`;
+        : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0;font-size:15px;line-height:2">衣橱里没有其他${it.cat}<br>点底部 + 号添加衣物</div>`;
       $$("[data-s]").forEach(c => c.addEventListener("click", () => {
         $$(".swap-cell").forEach(x => x.classList.remove("on"));
         c.classList.add("on");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>创建我的模特 · 衣先知</title>
+<title>添加试衣照片 · 衣先知</title>
 <link rel="stylesheet" href="css/base.css">
 <style>
   .seg { display: flex; justify-content: center; gap: 40px; padding: 8px 0 2px; }
@@ -143,7 +143,7 @@
   <div class="pagehead">
     <button class="iconbtn" onclick="history.length > 1 ? AppNav.back() : AppNav.go('profile.html')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 8 12l6.5 7"/></svg></button>
     <div class="seg grow">
-      <button data-t="preset">预设模特</button>
+      <button data-t="preset">示例照片</button>
       <button class="on" data-t="mine">我的照片</button>
     </div>
     <span style="width:40px"></span>
@@ -167,11 +167,11 @@
   <div class="sheet-title">上传提示
     <button class="sheet-x" onclick="closeSheet('sheetTip')" aria-label="关闭"><span data-icon="x"></span></button>
   </div>
-  <p class="tip-sub">请上传一张正面、半身或全身照，需穿着贴身衣物。</p>
+  <p class="tip-sub">请选正面照，穿贴身衣物。生成试穿图需要全身照。</p>
   <!-- 示例图放 assets/ph/，文件名固定如下（jpg）；缺图时自动回退灰剪影 -->
   <div class="good-grid">
     <div class="good"><span class="mk">✓</span><img src="assets/ph/tip-good-full.jpg" onerror="this.onerror=null;this.src='assets/ph/model.svg'"><span class="lbl">全身照</span></div>
-    <div class="good"><span class="mk">✓</span><img src="assets/ph/tip-good-half.jpg" onerror="this.onerror=null;this.src='assets/ph/model.svg'"><span class="lbl">半身照</span></div>
+    <div class="good"><span class="mk">✓</span><img src="assets/ph/tip-good-half.jpg" onerror="this.onerror=null;this.src='assets/ph/model.svg'"><span class="lbl">半身照（仅拼图）</span></div>
   </div>
   <div class="bad-grid">
     <div class="bad"><span class="mk">✕</span><img src="assets/ph/tip-bad-closeup.jpg" onerror="this.onerror=null;this.src='assets/ph/model.svg'"><span class="lbl">局部特写</span></div>
@@ -188,7 +188,7 @@
 <!-- 检测中 -->
 <div class="scan-veil" id="scanVeil">
   <div class="scan-box"><img id="scanImg" src="assets/ph/model.svg"></div>
-  <h3>照片检测中</h3>
+  <h3>正在检查照片</h3>
   <p>正在检查照片是否适合试衣…</p>
 </div>
 

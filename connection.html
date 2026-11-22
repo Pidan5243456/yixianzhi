@@ -3,7 +3,7 @@
 <script src="js/build-config.js"></script><script src="js/runtime.js"></script><script src="js/wardrobe-model.js"></script><script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="connection"><main class="app"><div class="pagehead"><a class="iconbtn" href="login.html">‹</a><h1 style="font-size:24px">服务连接</h1></div>
-<div style="padding:24px 16px"><p style="line-height:1.8;color:var(--ink-2)">连接你的衣先知服务后，可使用邮箱登录、AI 和云端同步。地址由服务部署者提供。</p>
+<div style="padding:24px 16px"><p style="line-height:1.8;color:var(--ink-2)">服务地址由服务提供方给你。连接后可登录和同步资料；AI 功能需服务方先配置。</p>
 <label for="endpoint" style="display:block;margin:24px 0 8px">服务地址</label><div class="field"><input id="endpoint" type="url" placeholder="https://your-server.example" autocomplete="off"></div>
 <button id="save" class="btn btn-primary btn-block" style="margin-top:16px">检测并连接</button>
 <button id="demo" class="btn btn-ghost btn-block" style="margin-top:12px">使用本地演示</button>
@@ -11,11 +11,11 @@
 <div style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px">
 <p id="syncStatus" style="line-height:1.8">本机资料</p>
 <button id="syncNow" class="btn btn-ghost btn-block" style="margin-top:12px">立即同步 / 重试保存</button>
-<div id="conflictActions" hidden><p style="margin-top:12px">两端资料有冲突。选择前会保留本机备份。</p><button id="useCloud" class="btn btn-ghost btn-block" style="margin-top:12px">使用云端版本</button><button id="useLocal" class="btn btn-ghost btn-block" style="margin-top:12px">用本机版本覆盖云端</button></div>
+<div id="conflictActions" hidden><p style="margin-top:12px">本机和云端有不同的修改。选择要保留的版本前，会先备份本机资料。</p><button id="useCloud" class="btn btn-ghost btn-block" style="margin-top:12px">使用云端版本</button><button id="useLocal" class="btn btn-ghost btn-block" style="margin-top:12px">用本机版本覆盖云端</button></div>
 <button id="export" class="btn btn-ghost btn-block" style="margin-top:12px">导出本机资料</button>
 <button id="import" class="btn btn-ghost btn-block" style="margin-top:12px">导入备份资料</button>
 <input id="backupFile" type="file" accept="application/x-ndjson,application/json,.yxz,.json" hidden>
-<p style="font-size:12px;color:var(--muted);margin-top:12px">备份包含私人照片，请自行妥善保管。导入会替换当前账号的本机资料。</p>
+<p style="font-size:12px;color:var(--muted);margin-top:12px">备份里有你的照片，请妥善保管。导入会替换当前账号的本机资料。</p>
 </div>
 <p style="margin-top:24px;color:var(--muted);font-size:13px">切换服务将退出当前登录，各服务的数据独立保存。演示不会调用付费模型。</p></div></main>
 <script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/pages/connection.js"]</script>

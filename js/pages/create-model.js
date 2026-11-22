@@ -47,7 +47,7 @@
   function confirmMine(id, btn) {
     if (leaving) return;
     Store.set({ curModel: id });
-    savedToast("已设为当前模特");
+    savedToast("已选用这张照片");
     btn.disabled = true;
     btn.textContent = "正在返回…";
     backToTryon(600);
@@ -60,10 +60,10 @@
     if (!mine.length) {
       $("#paneMine").innerHTML = `
         <div class="my-empty">
-          <div class="figure rise"><img src="assets/ph/create-model-hero.jpg" alt="创建我的模特"></div>
+          <div class="figure rise"><img src="assets/ph/create-model-hero.jpg" alt="添加试衣照片"></div>
           <h2 class="rise d1">用自己的照片试衣</h2>
-          <p class="rise d2">上传清晰的正面半身照或全身照</p>
-          <button class="btn btn-primary rise d3" style="padding:14px 34px" onclick="openSheet('sheetTip')">创建我的模特</button>
+          <p class="rise d2">生成试穿图需要清晰的正面全身照</p>
+          <button class="btn btn-primary rise d3" style="padding:14px 34px" onclick="openSheet('sheetTip')">添加试衣照片</button>
         </div>`;
     } else {
       const s = Store.get();
@@ -74,7 +74,7 @@
             <img src="${MediaCache.src(cur.dataUrl)}">
             <button class="del" data-del="${cur.id}" aria-label="删除照片">${uiIcon("trash")}</button>
           </div>
-          <button class="add-model rise d1" onclick="openSheet('sheetTip')"><span class="plus">＋</span>添加模特</button>
+          <button class="add-model rise d1" onclick="openSheet('sheetTip')"><span class="plus">＋</span>添加照片</button>
           <div style="height:14px"></div>
           <button class="btn btn-primary btn-block rise d2" onclick="confirmMine('${cur.id}', this)">确认</button>
         </div>`;
@@ -112,7 +112,7 @@
       const raw=await new Promise((ok,no)=>{const reader=new FileReader();reader.onload=()=>ok(reader.result);reader.onerror=()=>no(reader.error);reader.readAsDataURL(f);});
       const small=await compressImage(raw,900,.8);
       if(epoch!==LocalState.epoch||key!==LocalState.key||LocalState.locked)return;
-      const id='u_'+crypto.randomUUID();if(Store.get().models.length>=1000)throw Error('模特照片数量已达上限');
+      const id='u_'+crypto.randomUUID();if(Store.get().models.length>=1000)throw Error('试衣照片数量已达上限');
       Store.set({models:[...Store.get().models,{id,name:'我的模特',dataUrl:small}]});await LocalState.flush();mineShow=id;renderMine();toast('照片已保存，点「确认」使用');
     }catch(e){toast(e.message||'照片无法处理');throw e;}}).catch(()=>{});
     e.target.value = "";

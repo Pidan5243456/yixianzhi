@@ -18,15 +18,15 @@
       read: p => (p.pref || []).join("、"), cur: p => p.pref || [], save: v => saveProfile({ pref: v }) },
     { key: "height", label: "身高", type: "number", placeholder: "请输入身高", unit: "cm", lo: 100, hi: 250,
       read: p => p.height ? p.height + "cm" : "", cur: p => p.height || "", save: v => saveProfile({ height: v }) },
-    { key: "size", label: "身材尺码", type: "single", opts: ["XS", "S", "M", "L", "XL", "XXL"],
+    { key: "size", label: "常穿尺码", type: "single", opts: ["XS", "S", "M", "L", "XL", "XXL"],
       read: p => p.size || "", save: v => saveProfile({ size: v }) },
-    { key: "bodyType", label: "身材体型", type: "single", opts: ["偏瘦", "匀称", "微胖", "丰满", "健硕"],
+    { key: "bodyType", label: "体型", type: "single", opts: ["偏瘦", "匀称", "微胖", "丰满", "健硕"],
       read: p => p.bodyType || "", save: v => saveProfile({ bodyType: v }) },
-    { key: "budget", label: "购买区间", type: "range",
+    { key: "budget", label: "买衣预算", type: "range",
       read: p => p.budgetMin && p.budgetMax ? `¥${p.budgetMin}–${p.budgetMax}` : "" },
-    { key: "styles", label: "风格喜好", type: "multi", opts: ["通勤", "休闲", "运动", "约会", "街头", "复古", "极简", "甜美"],
+    { key: "styles", label: "喜欢的风格", type: "multi", opts: ["通勤", "休闲", "运动", "约会", "街头", "复古", "极简", "甜美"],
       read: p => (p.styles || []).join("、"), cur: p => p.styles || [], save: v => saveProfile({ styles: v }) },
-    { key: "colorTypes", label: "色彩类型", type: "multi", opts: ["黑白灰", "大地色系", "莫兰迪低饱和", "明亮色系", "粉嫩色系", "深色系"],
+    { key: "colorTypes", label: "喜欢的颜色", type: "multi", opts: ["黑白灰", "大地色系", "莫兰迪低饱和", "明亮色系", "粉嫩色系", "深色系"],
       read: p => (p.colorTypes || []).join("、"), cur: p => p.colorTypes || [], save: v => saveProfile({ colorTypes: v }) },
   ];
 
@@ -97,7 +97,7 @@
           <span style="color:var(--muted)">—</span>
           <div class="field grow"><input id="maxIn" type="number" inputmode="numeric" placeholder="最高价" value="${escapeHTML(p.budgetMax || "")}"></div>
         </div>
-        <p style="font-size:12.5px;color:var(--muted);margin-top:10px">单次购买服饰的预算范围（元）</p>${saveBtn}`;
+        <p style="font-size:12.5px;color:var(--muted);margin-top:10px">一次买衣服打算花多少钱（元）</p>${saveBtn}`;
       $("#btnSheetSave").addEventListener("click", () => {
         const a = $("#minIn").value.trim(), b = $("#maxIn").value.trim();
         if (!a && !b) { saveProfile({ budgetMin: "", budgetMax: "" }); closeSheet("sheetEdit"); savedToast("已清除"); return; }

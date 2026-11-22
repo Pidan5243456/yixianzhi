@@ -91,18 +91,18 @@
         <svg class="ric" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.5 18.5c1.3-2.4 3.2-3.5 5.5-3.5s4.2 1.1 5.5 3.5"/></svg>
         <span>
           <span class="sl">账号与安全</span>
-          <span class="ssub" style="display:block">头像、昵称、登录邮箱、微信绑定</span>
+          <span class="ssub" style="display:block">头像、昵称和登录邮箱</span>
         </span>
         <span class="sv"></span>
         <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
       </button>
     </div>
 
-    <!-- 我的造型档案 -->
+    <!-- 穿衣偏好 -->
     <div class="sgroup rise d1">
       <div class="ghead">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5.5 4 4L8.5 19.5 4 21l1.5-4.5z"/><path d="m12.5 7.5 4 4"/></svg>
-        我的造型档案
+        穿衣偏好
       </div>
       <div id="fieldRows"></div>
     </div>
@@ -115,9 +115,9 @@
         <span class="sl">关于衣先知</span><span class="sv"></span>
         <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
       </button>
-      <button class="srow" onclick="toast('感谢鼓励！正式上架后记得给衣先知五星 ❤️')">
+      <button class="srow" onclick="toast('应用尚未上架，暂时不能评分')">
         <svg class="ric" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zM7 11l4.2-7.2A2.3 2.3 0 0 1 13.5 6v4H19a2 2 0 0 1 2 2.4l-1.2 5.8a2 2 0 0 1-2 1.8H7"/></svg>
-        <span class="sl">鼓励一下</span><span class="sv"></span>
+        <span class="sl">评价应用</span><span class="sv"></span>
         <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
       </button>
       <button class="srow" onclick="openSheet('sheetContact')">
@@ -160,8 +160,8 @@
 <div class="sheet" id="sheetAbout">
   <div class="sheet-grab"></div>
   <div class="about-brand">衣先知</div>
-  <div class="about-ver">v1.4.0 · Android 测试版</div>
-  <p class="about-intro">把衣橱装进手机，用 AI 试穿每一套搭配。<br>电子衣橱 · AI 试穿 · 智能搭配推荐</p>
+  <div class="about-ver">v1.5.1 · Android 测试版</div>
+  <p class="about-intro">整理衣橱，保存搭配；也可连接 AI 服务获取搭配建议和试穿图。</p>
 </div>
 
 <!-- 联系我们（占位邮箱，上线前替换为正式客服邮箱） -->
@@ -172,8 +172,7 @@
     <button class="sheet-x" onclick="closeSheet('sheetContact')" aria-label="关闭"><span data-icon="x"></span></button>
   </div>
   <p style="text-align:center;font-size:15px;color:var(--ink-2);line-height:2;padding-bottom:8px">
-    客服邮箱：<b style="color:var(--ink)">请联系你的服务部署者</b><br>
-    此版本未配置客服邮箱
+    暂未设置客服邮箱，请联系提供服务地址的人。
   </p>
 </div>
 
@@ -198,7 +197,7 @@
 <div class="modal-mask" id="modalReset">
   <div class="modal">
     <h3>重置演示数据</h3>
-    <p>将清空衣橱、收藏、试衣历史、上传的照片，回到全新用户状态。</p>
+    <p>将清空本机演示中的衣物、收藏、试穿记录和上传照片。</p>
     <div style="display:flex;gap:12px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalReset')">取消</button>
       <button class="btn btn-primary" style="flex:1" onclick="resetDemoData()">重置</button>

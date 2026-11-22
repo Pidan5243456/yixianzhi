@@ -31,9 +31,9 @@
     const need=dress?['连体裙','鞋子']:['上衣','下装','鞋子'];
     const chosen=need.map(pick).filter(Boolean),missing=need.filter(c=>!pick(c));
     const notes=[];if(missing.length)notes.push('还缺'+missing.join('、'));
-    if(chosen.some(i=>i.cat!=='鞋子'&&!i.warmth))notes.push('部分衣物未填写保暖标签');
-    if(temp!==null&&temp<=12)notes.push('低温出行请另确认外套及实际保暖程度');
-    return {items:chosen.map(i=>i.id),missing,reason:notes.join('；')||'已按场景和保暖标签选搭',context:ctx,method:'rules'};
+    if(chosen.some(i=>i.cat!=='鞋子'&&!i.warmth))notes.push('有些衣服还没填写保暖程度');
+    if(temp!==null&&temp<=12)notes.push('温度较低，别忘了外套，也要看看这套衣服够不够暖。');
+    return {items:chosen.map(i=>i.id),missing,reason:notes.join('；')||'已按场景和保暖程度选好搭配',context:ctx,method:'rules'};
   }
   const api={categories,scenes,normalize,validate,context,tomorrow,recommend};
   if(typeof module!=='undefined')module.exports=api;else root.WardrobeModel=api;
