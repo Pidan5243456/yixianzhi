@@ -38,7 +38,7 @@ const Store = {
   _cache: null,
   defaults() {
     return {
-      dataVersion: 2, customOutfits: [],
+      dataVersion: 3, customOutfits: [],
       wardrobe: [],   // 衣橱里的单品 id（新用户=基础款）
       customItems: [],                   // 用户上传的单品 {id,name,cat,dataUrl}
       pendingSegments: [],
@@ -62,6 +62,7 @@ const Store = {
     if (!this._cache) {
       try { this._cache = { ...this.defaults(), ...LocalState.record.state }; }
       catch { this._cache = this.defaults(); }
+      this._cache.dataVersion=3; this._cache.customItems=(this._cache.customItems||[]).map(WardrobeModel.normalize);
       /* 迁移：虚拟模特只保留默认款（高个/微胖/小个子已下线），用户上传的照片模特保留 */
       this._cache.models = this._cache.models.filter(m => m.dataUrl || m.id === "m1");
       if (!this._cache.models.find(m => m.id === "m1")) {
@@ -134,16 +135,17 @@ function itemById(id) {
 const PRESET_GARMENT_IDS = Object.freeze(['f-daily-02-top','f-daily-02-bottom','f-date-08-shoes','m-daily-01-top','m-daily-01-bottom','m-daily-01-shoes']);
 function presetItems() { const hidden=new Set(Store.get().deletedItems);return PRESET_GARMENT_IDS.map(id=>ITEMS.find(i=>i.id===id)).filter(i=>i&&!hidden.has(i.id)); }
 function isPresetItem(id) { return PRESET_GARMENT_IDS.includes(id)&&!inWardrobe(id); }
-function selectableItems() { return [...new Map([...wardrobeItems(),...presetItems()].map(i=>[i.id,i])).values()]; }
-function recommendationItems(around=null) { const mine=wardrobeItems();return around&&isPresetItem(around)?presetItems():mine.length?mine:presetItems(); }
+function selectableItems() { return [...new Map([...wardrobeItems(),...wishlistItems(),...presetItems()].map(i=>[i.id,i])).values()]; }
+function wishlistItems() { return Store.get().customItems.filter(i=>i.ownership==='wishlist'&&!Store.get().deletedItems.includes(i.id)); }
+function recommendationItems(around=null) { const mine=wardrobeItems(),anchor=itemById(around);return around&&isPresetItem(around)?presetItems():anchor?.ownership==='wishlist'?[anchor,...mine]:mine; }
 function wardrobeItems() {
   const s = Store.get();
   /* 用户自己上传的衣服排在最前面 */
-  return [...s.customItems, ...ITEMS.filter(i => s.wardrobe.includes(i.id))].filter(i=>!s.deletedItems.includes(i.id));
+  return [...s.customItems.filter(i=>i.ownership!=='wishlist'), ...ITEMS.filter(i => s.wardrobe.includes(i.id))].filter(i=>!s.deletedItems.includes(i.id));
 }
 function inWardrobe(id) {
   const s = Store.get();
-  return s.wardrobe.includes(id) || s.customItems.some(c => c.id === id);
+  return s.wardrobe.includes(id) || s.customItems.some(c => c.id === id && c.ownership!=='wishlist');
 }
 /* 引导问卷选的服饰性别偏好 → 展示哪些性别的搭配（没选=全部） */
 function prefGenders() {

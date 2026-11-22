@@ -251,3 +251,8 @@ button:focus-visible,a:focus-visible,[role=button]:focus-visible {outline:2px so
 .preset-badge{position:absolute;top:10px;left:10px;z-index:2;border-radius:7px;padding:4px 7px;background:#fff;color:#555;font-size:11px;line-height:1.2;pointer-events:none}.dcell .preset-badge{top:5px;left:5px;font-size:10px;padding:3px 5px}
 
 #missingItems{margin:8px var(--pad);display:block}#missingItems[hidden]{display:none}
+
+/* Outfit conditions remain visible with the saved outfit. */
+.outfit-context{font-size:13px;line-height:1.6;padding:6px 18px;color:#444;background:#fff}.outfit-context:empty{display:none}.tryon-actions{flex-wrap:wrap!important}.tryon-actions .btn{flex:1 1 40%;min-height:40px}.product-dialog input,.product-dialog select{max-width:100%;min-width:0}.btn:disabled{opacity:.45;cursor:not-allowed}
+
+[data-page=tryon] .stage{--controls-height:120px}[data-page=tryon] .tryon-controls{position:absolute;bottom:34px;left:14px;right:14px;z-index:6}[data-page=tryon] .tryon-actions{position:static}[data-page=tryon] .outfit-context{padding:4px 2px 8px;max-height:72px;overflow:auto;border-radius:8px}[data-page=tryon] .model-wrap{margin-bottom:calc(var(--controls-height) + 10px);height:calc(100% - var(--controls-height) - 80px)}

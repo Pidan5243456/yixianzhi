@@ -6,6 +6,8 @@
   let curOutfitId = null;
   let aiAround = null;
   let genImage = null;        // 真模型返回的整图结果（占位实现下为 null）
+  let aiCaps={};
+  AI.capabilities().then(c=>{aiCaps=c;setLoading(generating);syncAIBtn();});
   let generating = false;     // 是否正在生成（生成中显示加载态，不显示临时叠图）
   let offlineOverlay = true; // 无密钥/后端不在线的演示模式：兜底允许平铺叠图（双击HTML也能用）；
                               // 线上真生成失败不叠图——保持台上原样并 toast 重试
@@ -24,6 +26,19 @@
     curOutfitId = Store.get().outfitDraft?.outfitId || null;
   }
 
+  let outfitContext=WardrobeModel.context(outfitById(curOutfitId)?.context||Store.get().outfitDraft?.context||{date:WardrobeModel.tomorrow()});
+  let ruleReason='';
+  function contextLabel(){const trial=wearing.some(id=>itemById(id)?.ownership==='wishlist');$('#outfitContext').textContent=[trial?'试搭 · 含未购买衣物':'',outfitContext.date,outfitContext.scene,outfitContext.temperature===null?'':outfitContext.temperature+'°C · 手动设置',ruleReason].filter(Boolean).join(' · ');}
+  $('#btnSuggest').onclick=()=>{
+    const d=document.createElement('dialog');d.className='product-dialog';
+    d.innerHTML='<form><h2>选一套</h2><label>日期<input type="date" name="date" required></label><label>场景<select name="scene">'+WardrobeModel.scenes.map(x=>'<option>'+x+'</option>').join('')+'</select></label><label>温度（°C，手动设置）<input type="number" name="temperature" min="-50" max="60" placeholder="可选"></label><div class="product-actions"><button type="button" class="btn btn-ghost" data-close>取消</button><button class="btn btn-primary">按条件选搭</button></div></form>';
+    const f=d.querySelector('form');f.elements.date.value=outfitContext.date||WardrobeModel.tomorrow();f.elements.scene.value=outfitContext.scene;f.elements.temperature.value=outfitContext.temperature??'';
+    d.querySelector('[data-close]').onclick=()=>d.close();d.onclose=()=>d.remove();
+    f.onsubmit=e=>{e.preventDefault();try{outfitContext=WardrobeModel.context({date:f.elements.date.value,scene:f.elements.scene.value,temperature:f.elements.temperature.value===''?null:Number(f.elements.temperature.value)});
+      const anchor=wearing.find(id=>itemById(id)?.ownership==='wishlist')||(aiAround&&itemById(aiAround)?aiAround:null),r=WardrobeModel.recommend(recommendationItems(anchor),anchor,outfitContext);
+      wearing=r.items;ruleReason=r.reason;curOutfitId=null;renderAll();applyTryon();d.close();if(!wearing.length)toast('先添加自己的衣服，或选择一件预设试搭');
+    }catch(e){toast(e.message);}};document.body.append(d);d.showModal();
+  };
   /* ---------- 模特与上身合成 ---------- */
   function curModel() {
     const s = Store.get();
@@ -61,9 +76,9 @@
      进度条为模拟值（生图无真实进度）：先快后慢逼近 96%，完成瞬间跳满停一拍再收 */
   function setLoading(on) {
     $('#genLoading').classList.toggle('show',on);
-    $('#btnGenerate').disabled=on;
-    $('#btnGenerate').textContent=on?'生成中…':'生成试穿';
-    $('#previewKind').textContent=genImage?'AI 试穿效果':'搭配预览';
+    $('#btnGenerate').disabled=on||(!AppAPI.demo&&!aiCaps.TRYON?.available);$('#btnGenerate').title=aiCaps.TRYON?.reason||'';
+    $('#btnGenerate').textContent=on?'处理中…':AppAPI.demo?'保存拼图':aiCaps.TRYON?.available?'生成试穿':'试穿暂不可用';
+    $('#previewKind').textContent=genImage?'AI 试穿效果':'搭配拼图';contextLabel();
   }
 
   function renderStage() {
@@ -149,14 +164,14 @@
   function applyTryon() {
     tryonSeq++;
     generating=false;genImage=null;offlineOverlay=true;
-    Store.set({outfitDraft:{items:[...wearing],outfitId:curOutfitId}});
+    Store.set({outfitDraft:{items:[...wearing],outfitId:curOutfitId,context:outfitContext}});
     renderStage();
   }
   async function doTryon() {
     if(generating)return;
     if(!wearing.length){toast('请先选择衣物');return;}
     const seq=++tryonSeq,epoch=LocalState.epoch,partition=LocalState.key;
-    const snapshot={items:structuredClone(wearing.map(itemById).filter(Boolean)),model:structuredClone(curModel()),outfitId:curOutfitId,time:Date.now(),base:defaultModelSrc()};
+    const snapshot={items:structuredClone(wearing.map(itemById).filter(Boolean)),model:structuredClone(curModel()),outfitId:curOutfitId,time:Date.now(),base:defaultModelSrc(),context:structuredClone(outfitContext)};
     const key=JSON.stringify([snapshot.model,snapshot.base,snapshot.items]);
     const current=()=>epoch===LocalState.epoch&&partition===LocalState.key&&!LocalState.locked;
     generating=true;renderStage();
@@ -166,7 +181,7 @@
         const modelImage=snapshot.model.dataUrl||await srcToDataUrl(snapshot.base,1200);
         const items=await Promise.all(snapshot.items.map(async it=>({id:it.id,category:it.cat,image:await itemDataUrl(it)})));
         if(!current()||seq!==tryonSeq)return;
-        const r=await AI.tryon(modelImage,items,{modelId:snapshot.model.id,outfitId:snapshot.outfitId||'',scene:outfitById(snapshot.outfitId)?.scene||'日常'});image=r.image;mock=!!r.mock;if(r.record)serverRecord=r.record;
+        const r=await AI.tryon(modelImage,items,{modelId:snapshot.model.id,outfitId:snapshot.outfitId||'',scene:snapshot.context.scene,context:snapshot.context});image=r.image;mock=!!r.mock;if(r.record)serverRecord=r.record;
         if(!image&&!mock)throw Error('未生成图片，请重试');
         if(image)genCache.set(key,image);
       }
@@ -183,7 +198,7 @@
     finally{if(current()&&seq===tryonSeq){generating=false;renderStage();}}
   }
   $('#btnGenerate').onclick=doTryon;
-  $('#btnSaveOutfit').onclick=async()=>{const o=await saveOutfitDialog(wearing,curOutfitId);if(o){curOutfitId=o.id;syncFav();renderOutfitGrid();}};
+  $('#btnSaveOutfit').onclick=async()=>{const o=await saveOutfitDialog(wearing,curOutfitId,false,outfitContext);if(o){curOutfitId=o.id;syncFav();renderOutfitGrid();}};
 
   /* 本地合成快照：模特图 + 衣服叠放 画到 canvas */
   const CAT_POS = {
@@ -266,7 +281,7 @@
         </div>`).join("");
     $$("[data-o]").forEach(c => c.addEventListener("click", () => {
       const o = outfitById(c.dataset.o);
-      wearing = o.items.filter(id=>itemById(id)); curOutfitId = o.id;   /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
+      wearing = o.items.filter(id=>itemById(id)); curOutfitId = o.id; outfitContext=WardrobeModel.context(o.context||{scene:o.scene});ruleReason=""; /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
       renderAll(); applyTryon();
       savedToast(`已试穿「${o.name}」`);
     }));
@@ -293,7 +308,7 @@
       `<div class="dcell add" data-add role="button" tabindex="0" aria-label="上传衣服">${uiIcon('plus')}</div>` + localCard + splitCards +
       list.map(it => `
         <div class="dcell ${wearing.includes(it.id) ? "on" : ""}" data-i="${it.id}">
-          ${it.dataUrl ? `<img src="${MediaCache.src(it.dataUrl)}">` : itemImg(it)}${isPresetItem(it.id)?'<span class="preset-badge">预设</span>':''}
+          ${it.dataUrl ? `<img src="${MediaCache.src(it.dataUrl)}">` : itemImg(it)}${isPresetItem(it.id)?'<span class="preset-badge">预设</span>':it.ownership==='wishlist'?'<span class="preset-badge">想买</span>':''}
         </div>`).join("");
     $$("[data-i]").forEach(c => c.addEventListener("click", () => wearItem(c.dataset.i)));
     bindSegRetry();
@@ -327,7 +342,8 @@
       if (["上衣", "下装"].includes(it.cat)) wearing = wearing.filter(w => itemById(w)?.cat !== "连体裙");
       wearing = [...wearing, id];
     }
-    aiAround = takenOff ? null : id;
+    if(!takenOff&&it.ownership==='wishlist')wearing=wearing.filter(w=>w===id||itemById(w)?.ownership!=='wishlist');
+    ruleReason="";aiAround = takenOff ? null : id;
     curOutfitId = null;                                 /* 旧生成图交给 doTryon 统一管理，失败时留旧图 */
     renderAll(); applyTryon();
     savedToast(takenOff ? `已脱下「${it.name}」` : `已换上「${it.name}」`);
@@ -335,7 +351,7 @@
 
   /* ---------- AI 搭配 ---------- */
   function hasUploads() { return selectableItems().length > 0; }
-  function syncAIBtn() { $("#btnAI").classList.toggle("off", !hasUploads()); }
+  function syncAIBtn() { $('#btnAI').disabled=!hasUploads()||!aiCaps.RECOMMEND?.available;$('#btnAI').textContent=aiCaps.RECOMMEND?.available?'AI 推荐':'AI 推荐未开通';$('#btnAI').title=aiCaps.RECOMMEND?.reason||''; }
 
   async function aiMatch(around) {
     const btn = $("#btnAI");
@@ -346,7 +362,7 @@
     btn.innerHTML = uiIcon('sparkles') + ' AI 搭配中…';
     Track.send("recommend_click", { around: !!around });
     try {
-      const r = await AI.recommend(input, around);
+      const r = await AI.recommend(input, around, outfitContext);
       if(seq!==tryonSeq||epoch!==LocalState.epoch||key!==LocalState.key||LocalState.locked)return;
       if (r.items && r.items.length) {
         wearing = r.items.filter(id=>input.some(i=>i.id===id)&&itemById(id));
@@ -354,15 +370,14 @@
         renderAll();
         await applyTryon();
         toast(r.reason
-          ? `AI：${r.reason}`
+          ? r.reason
           : (around ? "AI 已围绕这件衣服完成搭配" : "AI 已为你搭配一套新造型"));
       } else {
         toast("衣橱里的衣服不够搭一套，先多上传几件吧");
       }
     } catch(e) {if(!e.handled)toast(e.message||"推荐失败，请重试");
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = uiIcon('sparkles') + ' AI 推荐';
+      syncAIBtn();
     }
   }
 
@@ -371,7 +386,7 @@
       toast("没有可搭配的衣物，请先添加");
       return;
     }
-    aiMatch(aiAround && itemById(aiAround) ? aiAround : null);
+    aiMatch(wearing.find(id=>itemById(id)?.ownership==='wishlist')||(aiAround && itemById(aiAround) ? aiAround : null));
   });
 
   /* 从衣橱带单品进来：围绕它自动 AI 搭配（先进加载态，不闪临时叠图） */
@@ -383,7 +398,7 @@
   }
   $('#btnFav').onclick=async()=>{
     if(curOutfitId&&outfitById(curOutfitId)){toggleFavorite(curOutfitId);syncFav();}
-    else{const o=await saveOutfitDialog(wearing,null,true);if(o){curOutfitId=o.id;syncFav();renderOutfitGrid();}}
+    else{const o=await saveOutfitDialog(wearing,null,true,outfitContext);if(o){curOutfitId=o.id;syncFav();renderOutfitGrid();}}
   };
 
   /* ---------- tab 切换 ---------- */
@@ -401,7 +416,8 @@
   const stageEl = $(".stage");
   const grabEl = $(".drawer .grab");
   const stageMax = () => Math.round(window.innerHeight * (window.innerHeight<=700 ? 0.60 : 0.66));  /* 默认高度 = CSS 的 56dvh */
-  const stageMin = () => Math.round(window.innerHeight * 0.24);  /* 拉满时模特区收到 24dvh */
+  new ResizeObserver(()=>stageEl.style.setProperty('--controls-height',$('.tryon-controls').getBoundingClientRect().height+'px')).observe($('.tryon-controls'));
+  const stageMin = () => Math.max(Math.round(window.innerHeight * 0.24),$('.tryon-controls').getBoundingClientRect().height+130);  /* 拉满时模特区收到 24dvh */
   let gDrag = null;
   grabEl.addEventListener("pointerdown", e => {
     gDrag = { y: e.clientY, h: stageEl.getBoundingClientRect().height };
@@ -426,15 +442,18 @@
   grabEl.addEventListener("pointerup", gEnd);
   grabEl.addEventListener("pointercancel", gEnd);
 
-  let displayedModelId=Store.get().curModel;
+  const selectionFingerprint=async()=>{const snapshot=[wearing.map(id=>{const i=itemById(id),photo=i?.dataUrl||'assets/real/'+id+'.png';return [id,i?.cat,photo,i?.originalImage||photo,i?.cutoutImage||null];}),curModel()?.id,curModel()?.dataUrl||defaultModelSrc()];return Entities.json((await MediaCache.encode(snapshot)).value);};
+  let displayedSelection=selectionFingerprint();
   function renderAll() {
-    displayedModelId=Store.get().curModel;
+    displayedSelection=selectionFingerprint();
     renderStage(); renderOutfitGrid(); renderMineGrid(); renderModelBadge(); syncFav(); syncAIBtn();
   }
-  window.addEventListener('data-synced',()=>{
-    const available=wearing.filter(id=>itemById(id)),changed=available.length!==wearing.length||displayedModelId!==Store.get().curModel;
-    wearing=available;if(aiAround&&!itemById(aiAround))aiAround=null;
-    if(changed)applyTryon();renderAll();
+  let selectionSync=0;
+  window.addEventListener('data-synced',async()=>{const seq=++selectionSync,key=LocalState.key,epoch=LocalState.epoch,previous=displayedSelection;
+    wearing=wearing.filter(id=>itemById(id));if(aiAround&&!itemById(aiAround))aiAround=null;
+    try{const [before,after]=await Promise.all([previous,selectionFingerprint()]);if(seq!==selectionSync||previous!==displayedSelection||key!==LocalState.key||epoch!==LocalState.epoch)return;
+      if(before!==after)applyTryon();renderAll();
+    }catch{if(key===LocalState.key&&epoch===LocalState.epoch){applyTryon();renderAll();}}
   });
   renderCatChips(); renderSceneChipsD(); renderAll();
   applyTryon();

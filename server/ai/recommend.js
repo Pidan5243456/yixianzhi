@@ -79,7 +79,7 @@ module.exports = async function recommend(req) {
 
   try {
     const text = await chat(MODELS.recommend, [
-      { role: "user", content: recommendPrompt(wardrobe, around) },
+      { role: "user", content: recommendPrompt(wardrobe, around)+'\n用户手动设置的穿搭条件：'+JSON.stringify(req.context||{}) },
     ], { timeoutMs: 30000 });
     const r = parseJson(text);
 

@@ -3,6 +3,7 @@
 
   let cat = "全部", query = "", source = "all", order = "default";
   let localScan = false;
+  let pendingPurchase=null;
   let previewId = null, delTarget = null, deleteFocusId = null;
   const preview = $("#previewMask"), deleteDialog = $("#modalDel");
 
@@ -14,13 +15,16 @@
     previewId = item.id;
     $("#previewImg").src = src;
     $("#previewImg").alt = item.name || "衣物预览";
-    $("#previewName").textContent = (item.name || "我的单品") + (isPresetItem(item.id) ? " · 预设" : "");
+    $("#previewName").textContent = (item.name || "我的单品") + (isPresetItem(item.id) ? " · 预设" : item.ownership==="wishlist"?" · 想买":"");
     $("#previewCategory").textContent = [item.cat, item.scene].filter(Boolean).join(" · ");
-    $("#editGarment").hidden=!item.dataUrl;$("#splitGarment").hidden=!item.dataUrl;
+    $("#editGarment").hidden=!item.dataUrl;$("#purchaseGarment").hidden=item.ownership!=="wishlist";$("#cutoutGarment").hidden=!item.dataUrl;
+    $('#cutoutGarment').disabled=true;$('#cutoutGarment').textContent='去背景暂不可用';
+    AI.capabilities().then(c=>{if(previewId!==item.id||!preview.open)return;$('#cutoutGarment').disabled=!c.CUTOUT?.available;$('#cutoutGarment').textContent=c.CUTOUT?.available?'去背景':'去背景暂不可用';$('#cutoutGarment').title=c.CUTOUT?.reason||'';});
     preview.showModal();
   }
+  $('#cutoutGarment').onclick=async()=>{const it=Store.get().customItems.find(i=>i.id===previewId);if(!it)return;const snapshot=structuredClone(it);$('#cutoutGarment').disabled=true;try{const r=await AI.cutout(snapshot);toast(r.applied?'背景已去除，原图仍保留':r.reason||'结果已保存，衣物已改变');preview.close();renderItems();}catch(e){if(!e.handled)toast(e.message);}finally{if(preview.open)$('#cutoutGarment').disabled=false;}};
   $('#editGarment').onclick=()=>{const id=previewId;preview.close();AppNav.go('add-clothes.html?id='+encodeURIComponent(id));};
-  $('#splitGarment').onclick=()=>{const it=itemById(previewId);if(!it?.dataUrl)return;if(!confirm('AI 拆图会消耗一次整理额度，生成新单品并保留原照片。继续？'))return;preview.close();startSplitJob(it.dataUrl,crypto.randomUUID());};
+  $('#purchaseGarment').onclick=async()=>{const id=previewId,key=LocalState.key,epoch=LocalState.epoch,guard=AI.guard(),s=Store.get(),it=s.customItems.find(i=>i.id===id),retry=pendingPurchase?.id===id&&pendingPurchase.key===key&&pendingPurchase.epoch===epoch;if(!it||(it.ownership!=='wishlist'&&!retry))return;const button=$('#purchaseGarment');button.disabled=true;try{guard();if(it.ownership==='wishlist'){if(Store.set({customItems:s.customItems.map(i=>i.id===id?{...i,ownership:'owned',updatedAt:Date.now()}:i)})===false)throw Error('资料正在切换，请稍后重试');pendingPurchase={id,key,epoch};}else await LocalState.persist();await LocalState.flush();guard();pendingPurchase=null;button.textContent='已购买，移入衣橱';preview.close();renderItems();toast('已移入衣橱');}catch(e){button.textContent='重试保存';toast('购买状态尚未写入本机，请重试保存');}finally{button.disabled=false;}};
   $(".preview-close").addEventListener("click", () => preview.close());
   preview.addEventListener("close", () => { restoreItemFocus(previewId, "data-view"); previewId = null; });
   $("#previewMatch").addEventListener("click", () => {
@@ -45,7 +49,8 @@
     const needle = query.trim().toLocaleLowerCase();
     return selectableItems().filter(it => {
       if (source === "mine" && !mine.has(it.id)) return false;
-      if (source === "built-in" && mine.has(it.id)) return false;
+      if (source === "built-in" && !isPresetItem(it.id)) return false;
+      if (source === "wishlist" && it.ownership!=="wishlist") return false;
       const text = [it.name, it.cat, it.scene, ...Object.values(it.labels || {})].join(" ").toLocaleLowerCase();
       return !needle || text.includes(needle);
     });
@@ -94,7 +99,7 @@
     $("#itemGrid").innerHTML = localCard + progress + list.map(it => {
       const id = escapeHTML(it.id), name = escapeHTML(it.name || '我的单品');
       return '<article class="icard" data-item="' + id + '"' + (it.dataUrl ? ' data-photo' : '') + '>' +
-        '<button type="button" class="del" data-del="' + id + '" aria-label="' + (isPresetItem(it.id) ? '隐藏预设' : '删除') + name + '">' + uiIcon('trash') + '</button>' + (isPresetItem(it.id) ? '<span class="preset-badge">预设</span>' : '') +
+        '<button type="button" class="del" data-del="' + id + '" aria-label="' + (isPresetItem(it.id) ? '隐藏预设' : '删除') + name + '">' + uiIcon('trash') + '</button>' + (isPresetItem(it.id) ? '<span class="preset-badge">预设</span>' : it.ownership==='wishlist'?'<span class="preset-badge">想买</span>':'') +
         '<button type="button" class="imgwrap" data-view="' + id + '" aria-label="预览' + name + '">' + itemImg(it) + '</button>' +
         '<div class="garment-info"><h3 class="garment-name">' + name + '</h3><button type="button" class="match-pill" data-go="' + id + '"><span>去搭配</span>' + uiIcon('arrow-up-right') + '</button></div></article>';
     }).join('') + (!list.length && !localScan && !segCards.length ? empty : '');
@@ -128,39 +133,7 @@
 
   $("#sourceFilter").value="all";renderCats(); renderItems();
 
-  /* ---------- 拆图上传（后台任务 + 逐件进度卡） ----------
-     提交即返回 jobId（识别与逐件生成都在服务器跑，用户可离开本页）；
-     进度卡由 app.js 全局轮询的快照驱动，哪件先生成好哪件先入橱点亮，
-     失败卡可单件重试。离线时走本地模拟即时入橱。 */
-  async function startSplitJob(photo, requestId) {
-    Track.send("split_submit", { from: "wardrobe" });
-    try {
-      const r = await AI.segmentStart(photo, requestId);
-      if (r.jobId) {
-        Store.set({ pendingUpload: null, pendingSegments: [...(Store.get().pendingSegments || []), { jobId: r.jobId, ts: Date.now(), landed: [] }] });
-        renderItems();
-        savedToast("上传成功，AI 正在整理，可离开本页");
-        pollSegmentJobs();   /* 立即拉一次，尽快出识别结果的进度卡 */
-      } else if (r.local) {
-        /* 离线回退：本地模拟即时入橱 */
-        localScan = true;
-        renderItems();
-        await new Promise(rr => setTimeout(rr, 1200));
-        const items = await buildSegmentItems(r.local);
-        const saved = Store.set({ pendingUpload:null, customItems: [...items, ...Store.get().customItems] });
-        localScan = false;
-        renderCats(); renderItems();
-        if (saved !== false) savedToast(items.length > 1 ? `AI 拆分出 ${items.length} 件，已入橱` : "已添加到衣橱");
-      }
-    } catch (e) {
-      console.warn("发起拆分失败", e);
-      localScan = false;
-      renderItems();
-      /* 401/429 已由 ai.js 统一提示过（e.handled），别再用通用文案覆盖 */
-      if (!e || !e.handled) toast("上传失败，请重新试一次");
-    }
-  }
-
+  // Earlier split tasks remain readable; new uploads never start them.
   /* 后台任务状态推进/完成入橱后：本页在则实时刷新 */
   window.addEventListener("segments-updated", () => { renderCats(); renderItems(); });
 

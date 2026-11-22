@@ -1,6 +1,6 @@
 # 开发、部署与 Android 构建
 
-更新：2026-11-21。当前 1.4.1 首版已接入核心流程、预算、授权和增量同步，交付调试 APK 与可部署后端。真实服务配置、真机验收及正式签名仍是发布前事项。
+更新：2026-11-22。当前 1.5.0 首版已接入核心流程、预算、授权和增量同步，交付调试 APK 与可部署后端。真实服务配置、真机验收及正式签名仍是发布前事项。
 
 ## 本地开发
 
@@ -77,10 +77,16 @@ Windows 构建和校验使用 PowerShell 7（pwsh）、Java 21、Android SDK pla
 .\scripts\verify-apk.ps1 -AndroidSdk 'C:\Android\Sdk' -JavaHome 'C:\Program Files\Java\jdk-21'
 ```
 
-脚本先构建网页并同步 Capacitor，再运行 assembleDebug。当前版本产物 `artifacts/yixianzhi-1.4.1-debug.apk`；校验报告 `artifacts/apk-verification.json` 检查签名、包名、中文名称、版本、SDK、资源哈希和私有路径泄漏。
+脚本先构建网页并同步 Capacitor，再运行 assembleDebug。当前版本产物 `artifacts/yixianzhi-1.5.0-debug.apk`；校验报告 `artifacts/apk-verification.json` 检查签名、包名、中文名称、版本、SDK、资源哈希和私有路径泄漏。
 
 已产出调试 APK，资源校验结果以 [测试记录](../testing/latest.md) 为准。上述脚本不生成正式签名发布包；发布需单独的私钥保管与 release 构建配置，签名私钥不能进入仓库。
 
 ## 已安装旧调试包的设备
 
-1.4.1 与本仓库 1.4.0-debug 使用相同调试签名，可覆盖安装。本仓库签名与 AI-dress-up 的 1.3.1-debug 不同，Android 不允许直接覆盖。先在旧 App 导出备份并保管好，再由设备使用者更换安装并导入 .json/.yxz 备份。不要先卸载再寻找本机数据。本次没有读取旧签名私钥或改动设备。正式发布应固定受保护的 release 签名。
+1.5.0 与本仓库 1.4.0-debug 使用相同调试签名，可覆盖安装。本仓库签名与 AI-dress-up 的 1.3.1-debug 不同，Android 不允许直接覆盖。先在旧 App 导出备份并保管好，再由设备使用者更换安装并导入 .json/.yxz 备份。不要先卸载再寻找本机数据。本次没有读取旧签名私钥或改动设备。正式发布应固定受保护的 release 签名。
+
+## 本地 AI 服务接入
+
+本版提供已验证的 adapter 契约，不内置模型。按 [本地 AI 契约](../contracts/local-ai.md) 实现固定服务端地址，填 LOCAL_AI_URL/TOKEN/VERSION/CAPABILITIES 与正预算后重启后端。能力查询只说明配置允许调用，不代表连接验证成功。APK 永远调用衣先知后端；模型密钥和模型地址不下发到 APK。Docker 访问宿主机时不要误用容器自己的 localhost。邮件、HTTPS、正式签名及真实模型联调仍由部署环境验收。
+
+升级1.5.0前备份数据库和媒体，并同步升级客户端；旧客户端缺 clientDataVersion:3 会收到426，不能继续覆盖新归属/原图字段。后端新增 sharp 原生图片依赖，使用 npm ci 安装当前平台包；不要从 Windows 直接复制 node_modules 到 Linux。

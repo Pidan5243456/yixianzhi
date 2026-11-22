@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#ffffff">
 <script src="js/build-config.js"></script>
 <script src="js/runtime.js"></script>
-<script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
+<script src="js/wardrobe-model.js"></script><script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="wardrobe">
 <div class="app wardrobe-app">
@@ -32,7 +32,7 @@
     <section class="closet-library" id="collection" aria-label="衣橱单品">
       <div class="closet-tools">
         <label class="closet-search"><svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span class="sr-only">搜索衣物</span><input id="closetSearch" type="search" placeholder="搜索衣物" autocomplete="off" maxlength="100"><button type="button" id="clearSearch" aria-label="清空搜索" hidden><span data-icon="x"></span></button></label>
-        <label class="closet-source"><span class="sr-only">衣物来源</span><select id="sourceFilter"><option value="all">全部衣物</option><option value="mine">我的衣物</option><option value="built-in">预设衣物</option></select><span data-icon="chevron-down"></span></label>
+        <label class="closet-source"><span class="sr-only">衣物来源</span><select id="sourceFilter"><option value="all">全部衣物</option><option value="mine">我的衣物</option><option value="wishlist">想买</option><option value="built-in">预设衣物</option></select><span data-icon="chevron-down"></span></label>
       </div>
       <div class="catbar" id="catbar" role="group" aria-label="衣物分类"></div>
       <div class="closet-collection-head"><h2 id="collectionTitle">全部单品 <span id="resultCount" aria-live="polite"></span></h2><label class="closet-sort"><span class="sr-only">单品排序</span><select id="sortOrder"><option value="default">默认排序</option><option value="name">名称排序</option><option value="category">分类排序</option></select><span data-icon="chevron-down"></span></label></div>
@@ -53,7 +53,7 @@
   <button class="preview-close" type="button" aria-label="关闭单品预览" autofocus><span data-icon="x"></span></button>
   <div class="preview-image"><img id="previewImg" alt="单品预览"></div>
   <div class="preview-caption"><div><p id="previewCategory"></p><h2 id="previewName"></h2></div><button type="button" id="previewMatch">去搭配 <span data-icon="arrow-up-right"></span></button></div>
-<div class="product-actions preview-edit"><button class="btn btn-ghost" id="editGarment">编辑衣物</button><button class="btn btn-ghost" id="splitGarment">AI 拆图整理</button></div>
+<div class="product-actions preview-edit"><button class="btn btn-ghost" id="editGarment">编辑衣物</button><button class="btn btn-ghost" id="purchaseGarment" hidden>已购买，移入衣橱</button><button class="btn btn-ghost" id="cutoutGarment" disabled>去背景暂不可用</button></div>
 </dialog>
 
 <script id="page-scripts" type="application/json">["js/data.js","js/ui.js","js/app.js","js/sync.js","js/ai.js","js/pages/wardrobe.js"]</script>

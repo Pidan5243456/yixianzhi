@@ -48,4 +48,9 @@ function pull(owner,{cursor=0,watermark,limit=100}={}){migrate(owner);return tra
  return {syncVersion:2,entities,cursor:next,watermark:end,hasMore:next<end};
  });}
 function generated(owner,e){migrate(owner);return transaction(()=>{const old=get(owner,e.kind,e.id);if(old)return old;validate(owner,{...e,deleted:false,expectedVersion:0});return write(owner,e);});}
-module.exports={push,pull,get,generated,migrate};
+function applyCutout(owner,itemId,source,image,operationId,version){return transaction(()=>{const old=get(owner,'customItems',itemId);if(!old||old.deleted)return {applied:false,reason:'衣物已移除'};
+ const normalized=require('../js/wardrobe-model').normalize(old.data);if(normalized.originalImage!==source)return {applied:false,reason:'原照片已更换'};
+ if(normalized.processing?.operationId===operationId)return {applied:true};
+ const e={kind:'customItems',id:itemId,deleted:false,expectedVersion:old.version,data:{...normalized,cutoutImage:image,dataUrl:image,processing:{source,operationId,version},updatedAt:Date.now()}};validate(owner,e);write(owner,e);return {applied:true};
+});}
+module.exports={push,pull,get,generated,migrate,applyCutout};

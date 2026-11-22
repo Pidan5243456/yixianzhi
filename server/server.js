@@ -15,7 +15,8 @@ app.use(express.json({limit:'30mb'}));
 const route=fn=>(req,res,next)=>Promise.resolve().then(()=>fn(req,res)).catch(next);
 const token=req=>(req.headers.authorization||'').replace(/^Bearer\s+/i,'');
 function requireLogin(req,res,next){const email=auth.verifyToken(token(req));if(!email)return res.status(401).json({error:'请重新登录'});req.userEmail=email;next();}
-app.get('/api/health',(req,res)=>res.json({ok:true,service:'yixianzhi',syncVersion:2,dataVersion:2,demo:auth.demo,aiReady:!!(config.OPENROUTER_API_KEY&&config.DASHSCOPE_API_KEY)}));
+app.get('/api/health',(req,res)=>res.json({ok:true,service:'yixianzhi',syncVersion:2,dataVersion:3,demo:auth.demo,aiReady:require('./ai/local-gateway').capabilities().TRYON.available}));
+app.get('/api/ai/capabilities',(req,res)=>{const capabilities=require('./ai/local-gateway').capabilities();for(const kind of ['RECOMMEND','VALIDATE']){try{ai.configured(kind);capabilities[kind]={available:true,connectionVerified:false};}catch(e){capabilities[kind]={available:false,reason:e.message,connectionVerified:false};}}res.json({protocol:1,capabilities});});
 app.use(auth.router);
 app.post('/api/auth/logout',requireLogin,route((req,res)=>{auth.revoke(token(req));res.json({ok:true});}));
 app.post('/api/account/delete',requireLogin,route((req,res)=>{if(req.body.confirm!=='DELETE')throw control.fail('请确认注销账号');auth.confirmDeletion(req.userEmail,req.body.code);res.json(auth.remove(req.userEmail));}));
@@ -24,8 +25,9 @@ app.post('/api/consents',requireLogin,route((req,res)=>res.json(control.setConse
 app.post('/api/media/upload',requireLogin,route((req,res)=>{media.collect(req.userEmail);res.json({ref:media.upload(req.userEmail,req.body.image)});}));
 app.get('/api/media/:id',requireLogin,route((req,res)=>res.json({dataUrl:media.read(req.userEmail,req.params.id)})));
 app.post('/api/media/collect',requireLogin,route((req,res)=>res.json({deleted:media.collect(req.userEmail)})));
-app.post('/api/sync/pull',requireLogin,route((req,res)=>res.json(sync.pull(req.userEmail,req.body))));
-app.post('/api/sync/push',requireLogin,route((req,res)=>res.json(sync.push(req.userEmail,req.body))));
+const requireDataVersion=(req,res,next)=>req.body.clientDataVersion===3?next():res.status(426).json({error:'请更新衣先知后再同步，旧版无法保留衣物归属和原图',code:'CLIENT_UPDATE_REQUIRED'});
+app.post('/api/sync/pull',requireLogin,requireDataVersion,route((req,res)=>res.json(sync.pull(req.userEmail,req.body))));
+app.post('/api/sync/push',requireLogin,requireDataVersion,route((req,res)=>res.json(sync.push(req.userEmail,req.body))));
 app.post('/api/state/pull',requireLogin,route((req,res)=>{if(db.prepare('SELECT 1 FROM sync_migrations WHERE owner=?').get(req.userEmail))throw control.fail('请更新 App 后使用增量同步',426);res.json(state.pull(req.userEmail));}));
 app.post('/api/state/push',requireLogin,route((req,res)=>{if(req.body.schemaVersion!==1)throw control.fail('不支持的数据版本');res.json(state.push(req.userEmail,req.body.state,req.body.expectedVersion));}));
 app.post('/api/ai/operations',requireLogin,route((req,res)=>res.status(202).json(actions.run(req.userEmail,req.body.actionId,{...req.body,path:req.path},()=>ai.start(req.userEmail,req.body.kind,req.body.input||{},!!req.body.retry)))));

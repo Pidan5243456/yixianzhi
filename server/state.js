@@ -1,4 +1,5 @@
 const fs=require('node:fs');
+const WM=require('../js/wardrobe-model');
 const path=require('node:path');
 const crypto=require('node:crypto');
 const {db,dataDir,transaction,ensureUser}=require('./database');
@@ -24,13 +25,15 @@ function validate(input,{refs=false}={}) {
   if(s.processedSegmentTargets!==undefined && (!Array.isArray(s.processedSegmentTargets)||s.processedSegmentTargets.length>10000||s.processedSegmentTargets.some(x=>typeof x!=='string'||!/^[\w-]{1,120}$/.test(x)))) throw fail('任务记录错误');
   for(const k of ['favorites','wardrobe','deletedItems']) for(const id of s[k]) if(typeof id!=='string'||!/^[\w-]{1,120}$/.test(id)) throw fail('单品ID错误');
   for(const k of ['customItems','customOutfits','models','history']) for(const i of s[k]) if(!i || typeof i!=='object'||typeof i.id!=='string'||!/^[\w-]{1,120}$/.test(i.id)) throw fail('记录格式错误');
-  for(const i of s.customItems) if(!['上衣','下装','鞋子','连体裙'].includes(i.cat)||typeof i.name!=='string')throw fail('衣物格式错误');
-  if(s.dataVersion!==undefined&&s.dataVersion!==2)throw fail('不支持的数据版本');
+  for(const i of s.customItems) {try{WM.validate(i);}catch(e){throw fail(e.message);}}
+  s.customItems=s.customItems.map(WM.normalize);
+  if(s.dataVersion!==undefined&&![2,3].includes(s.dataVersion))throw fail('不支持的数据版本');
   for(const o of s.customOutfits)if(typeof o.name!=='string'||o.name.length>80||!Array.isArray(o.items)||o.items.length<1||o.items.length>4||new Set(o.items).size!==o.items.length||o.items.some(id=>typeof id!=='string'||!/^[\w-]{1,120}$/.test(id)))throw fail('搭配格式错误');
-  const imagePaths=new Set(['account.avatar',...s.customItems.map((_,i)=>`customItems.${i}.dataUrl`),...s.models.map((_,i)=>`models.${i}.dataUrl`),...s.history.map((_,i)=>`history.${i}.image`)]);
+  for(const o of s.customOutfits)if(o.context!==undefined){try{o.context=WM.context(o.context);}catch(e){throw fail(e.message);}}
+  const imagePaths=new Set(['account.avatar',...s.customItems.flatMap((_,i)=>['dataUrl','originalImage','cutoutImage'].map(k=>`customItems.${i}.${k}`)),...s.models.map((_,i)=>`models.${i}.dataUrl`),...s.history.map((_,i)=>`history.${i}.image`)]);
   function walk(v,p='') {
     if(typeof v==='string') {
-      if(v.startsWith('media:')&&(!refs||!imagePaths.has(p)||!/^media:[a-f0-9]{64}$/.test(v))) throw fail('媒体引用不合法');
+      if(v.startsWith('media:')&&(!refs||(!imagePaths.has(p)&&!/^customItems\.\d+\.processing\.source$/.test(p))||!/^media:[a-f0-9]{64}$/.test(v))) throw fail('媒体引用不合法');
       if(v.startsWith('data:') && !imagePaths.has(p)) throw fail('图片字段不允许');
       if(!imagePaths.has(p) && (v.length>4000 || /[<>]/.test(v))) throw fail('文本字段不合法');
     } else if(v && typeof v==='object') {

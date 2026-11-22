@@ -14,4 +14,6 @@
 
 产品故事和验收要求放 PRD；当前接口/字段放 contracts；当前能力与目标差异放业务模块；决策理由放 decisions；执行状态放 task-tracker；可复现证据放 testing。其他文档引用这些入口，避免多处复制状态。
 
-1.4.0 表示产品开发版本；syncVersion:2 表示当前实体同步协议；schemaVersion:1 表示仅供迁移前旧客户端使用的全量协议；dataVersion:2 表示业务快照结构；SQLite user_version:4 表示表结构迁移。任何一个数字都不能替代其他版本。
+1.5.0 表示当前产品开发版本；syncVersion:2 表示当前实体同步协议；schemaVersion:1 表示仅供迁移前旧客户端使用的全量协议；dataVersion:3 表示业务快照结构；SQLite user_version:4 表示表结构迁移。任何一个数字都不能替代其他版本。
+
+2026-11-22：同一可见评审聊天按用户授权担任产品经理。本轮 A 数据语义、B 两条用户故事、C 本地 adapter 已完成实施前评审；实施复核发现的账号切换、换图失效与演示凭据问题已进入回归。最终验收结论见 testing/latest.md，不能用设计通过代替。

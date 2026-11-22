@@ -1,14 +1,14 @@
 const CloudSync={
  timer:null,busy:false,runCounter:0,activeRun:0,message:'尚未同步',
  keys:['dataVersion','customOutfits','account','profile','favorites','wardrobe','deletedItems','onboarded','privacyOk','curModel','customItems','models','history','historySeeded','processedSegmentTargets'],
- snapshot(){const s=Store.get(),out={};for(const k of this.keys)if(s[k]!==undefined)out[k]=structuredClone(s[k]);out.dataVersion=2;out.account={nick:s.account?.nick||'',avatar:s.account?.avatar||''};return out;},
+ snapshot(){const s=Store.get(),out={};for(const k of this.keys)if(s[k]!==undefined)out[k]=structuredClone(s[k]);out.dataVersion=3;out.account={nick:s.account?.nick||'',avatar:s.account?.avatar||''};return out;},
  stop(){clearTimeout(this.timer);},reset(){this.stop();this.activeRun=++this.runCounter;this.busy=false;},
  schedule(){this.stop();if(!AppAPI.demo&&!LocalState.locked)this.timer=setTimeout(()=>this.run(),1500);},
  status(message){this.message=message;window.dispatchEvent(new Event('sync-status'));},
  meta(){return LocalState.record.v2||=( {base:{},cursor:0,watermark:null,conflicts:{},pending:null,initialized:false} );},
  same(a,b){return !!a?.deleted===!!b?.deleted&&Entities.json(a?.deleted?null:a?.data)===Entities.json(b?.deleted?null:b?.data);},
  async local(){return Entities.flatten((await MediaCache.encode(this.snapshot())).value);},
- async request(path,body){const r=await AppAPI.request(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await r.json();if(!r.ok)throw Object.assign(Error(data.error||'同步失败'),{status:r.status});if(data.syncVersion!==2)throw Error('后端版本不兼容，请更新服务');return data;},
+ async request(path,body){const r=await AppAPI.request(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,clientDataVersion:3})}),data=await r.json();if(!r.ok)throw Object.assign(Error(data.error||'同步失败'),{status:r.status});if(data.syncVersion!==2)throw Error('后端版本不兼容，请更新服务');return data;},
  async receive(remote,current){if(!current())return;const r=LocalState.record,m=this.meta(),local=await this.local();if(!current())return;
   const state=structuredClone(Store.get());
   for(const e of remote.entities){const k=e.kind+'/'+e.id,base=m.base[k],here=local[k]||{deleted:true};if(base&&e.version<=base.version)continue;

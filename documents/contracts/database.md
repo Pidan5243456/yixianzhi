@@ -1,6 +1,6 @@
 # 数据库与数据字典
 
-更新：2026-11-21。SQLite user_version=4；同步 syncVersion=2；业务 dataVersion=2。三个版本独立。来源：[database.js](../../server/database.js)。
+更新：2026-11-22。SQLite user_version=4；同步 syncVersion=2；业务 dataVersion=3。三个版本独立。来源：[database.js](../../server/database.js)。
 
 ## 存储布局
 
@@ -36,10 +36,10 @@ DATA_DIR 默认为 server/data，含 yixianzhi.sqlite、运行时 WAL/SHM、medi
 
 | kind | data 摘要 |
 |---|---|
-| customItems | id,name,cat,scene,dataUrl:media引用,source,createdAt,updatedAt,labels? |
-| customOutfits | id,name,scene,items:衣物ID数组,createdAt,updatedAt |
+| customItems | id,name,cat,ownership,scene,color?,warmth?,originalImage,cutoutImage?,dataUrl,processing?,source,createdAt,updatedAt,labels? |
+| customOutfits | id,name,scene,context:{date,scene,temperature},items:衣物ID数组,createdAt,updatedAt |
 | models | id,name,dataUrl；默认模特可为 null |
-| history | id=h_<operationId>,operationId,modelId,outfitId?,items,scene,time,image,kind |
+| history | id=h_<operationId>,operationId,modelId,outfitId?,items,scene,context?,time,image,kind |
 | 收藏/衣橱示例等成员 | ID 为所属对象 ID，data=true |
 | setting | account 仅 nick/avatar；profile 与其他偏好开关 |
 
@@ -68,3 +68,13 @@ entities 的主键是 (owner, kind, id)。例如，一件衣服对应 kind=custo
 升级按版本事务迁移，未来版本拒绝启动。生产升级应先备份，在副本验证迁移/恢复；不得降低 user_version 强行回滚。
 
 媒体和备份细节见 [M4](../modules/m4-sync.md)，费用见 [M3](../modules/m3-ai.md)。
+
+## 1.5.0 数据升级
+
+没有新增衣物表或双写：仍由 entities 作为单一事实来源。ownership 只能为 owned/wishlist，旧记录缺省 owned；预设不写此枚举。购买更新原行，搭配引用不变。originalImage 为本机压缩后的完整上传照片；cutoutImage 为可选透明派生图；dataUrl 是两者的确定性显示别名。相同字节由哈希去重，不重复储存原图和显示图。
+
+processing={source,operationId,version} 关联原图、任务与处理版本，任务状态不在衣物行复制。AI 标签仅在检查结果 suggestions 留存，不覆盖手动字段。CUTOUT 落库重新读取当前行，核对 originalImage，合并当前名称和归属后增加实体版本；删除/换图则只保留任务结果及未应用原因。
+
+业务快照升到3，syncVersion 仍为2，SQLite user_version 仍为4。新版同步请求必须包含 clientDataVersion:3，旧客户端返回426，防止丢字段及 wishlist 回退为 owned。已有旧快照只在未迁移期间支持旧路由；迁移后旧路由拒绝写入。部署时先备份并要求客户端同步升级。
+
+日期按本地日历保存字符串，温度为用户手动设置的°C数字或 null。原图、派生图、处理来源都纳入归属检查、备份和回收；衣物存在期间保留原图，删除及注销仍按留存规则清理。

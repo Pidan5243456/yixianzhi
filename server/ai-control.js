@@ -9,11 +9,11 @@ function integer(name,fallback=0){const v=process.env[name]===undefined?fallback
 function consent(owner,purpose='ai_processing'){return db.prepare('SELECT granted FROM consents WHERE owner=? AND purpose=?').get(owner,purpose)?.granted===1;}
 function requireConsent(owner){if(!demo()&&!consent(owner))throw fail('请先同意 AI 处理所选照片和衣物资料',403,'CONSENT_REQUIRED');}
 function setConsent(owner,purpose,granted){if(!['ai_processing','analytics'].includes(purpose)||typeof granted!=='boolean')throw fail('授权格式错误');ensureUser(owner);db.prepare('INSERT INTO consents VALUES(?,?,1,?,?) ON CONFLICT(owner,purpose) DO UPDATE SET version=1,granted=excluded.granted,updated_at=excluded.updated_at').run(owner,purpose,Number(granted),Date.now());return {purpose,granted,version:1};}
-function dailyLimit(kind){return integer('QUOTA_'+kind+'_PER_DAY',{SPLIT:5,TRYON:20,VALIDATE:30,RECOMMEND:50}[kind]||5);}
+function dailyLimit(kind){return integer('QUOTA_'+kind+'_PER_DAY',{SPLIT:5,TRYON:20,VALIDATE:30,RECOMMEND:50,INSPECT:30,CUTOUT:20}[kind]||5);}
 function quota(owner,kind){return Math.max(0,dailyLimit(kind)-(store.get('quota:'+kind+':'+owner+':'+day())||0));}
 function output(row){return {operationId:row.id,kind:row.kind,status:row.status,...(row.status==='done'?JSON.parse(row.result||'{}'):{}),...(row.error?{error:row.error}:{}),updatedAt:row.updated_at};}
 function owned(owner,id){const row=db.prepare('SELECT * FROM ai_operations WHERE owner=? AND id=?').get(owner,id);if(!row)throw fail('任务不存在',404);return row;}
-function fingerprint(input){const clean={...input};delete clean.retry;delete clean.requestId;return hash(E.json({input:clean,models:require('./ai/config').MODELS,promptVersion:'2026-11-21-v2'}));}
+function fingerprint(input){const clean={...input};delete clean.retry;delete clean.requestId;return hash(E.json({input:clean,models:require('./ai/config').MODELS,promptVersion:'2026-11-22-v3',executionMode:demo()?'demo':'real'}));}
 function find(owner,kind,input){return db.prepare('SELECT * FROM ai_operations WHERE owner=? AND kind=? AND fingerprint=?').get(owner,kind,fingerprint(input));}
 function assertCurrent(ctx=context.getStore()){
  if(!ctx)throw fail('缺少 AI 操作上下文',503);require('./auth').requireGeneration(ctx.owner,ctx.generation);

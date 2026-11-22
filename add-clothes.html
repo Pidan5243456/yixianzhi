@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="css/prototype.css">
 <script src="js/build-config.js"></script>
 <script src="js/runtime.js"></script>
-<script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
+<script src="js/wardrobe-model.js"></script><script src="js/entities.js"></script><script src="js/media-cache.js"></script><script src="js/consent.js"></script><script src="js/persistence.js"></script><script src="js/backup.js"></script>
 </head>
 <body data-page="add-clothes">
 <div class="app">
@@ -20,9 +20,12 @@
   <div class="ways"><button class="way" id="wayAlbum"><span data-icon="photo"></span>相册导入</button><button class="way" id="wayCam"><span data-icon="camera"></span>拍照导入</button></div>
   <form id="garmentForm" class="garment-form" hidden>
     <img id="garmentPhoto" alt="衣物照片">
+    <label>归属<select id="garmentOwnership"><option value="owned">我已拥有</option><option value="wishlist">想买 · 网购试搭</option></select></label>
     <label>名称<input id="garmentName" maxlength="80" required placeholder="例如：白色衬衫"></label>
     <label>分类<select id="garmentCategory"><option>上衣</option><option>下装</option><option>鞋子</option><option>连体裙</option></select></label>
     <label>场景<select id="garmentScene"><option>日常</option><option>通勤</option><option>约会</option><option>旅行</option><option>其他</option></select></label>
+    <label>保暖程度<select id="garmentWarmth"><option value="">暂不填写</option><option value="light">轻薄</option><option value="medium">适中</option><option value="warm">保暖</option></select></label>
+    <label>颜色<input id="garmentColor" maxlength="30" placeholder="可选，例如：白色"></label>
     <button class="btn btn-primary btn-block" id="saveGarment">保存衣物</button>
   </form>
   <input type="file" accept="image/*" id="fileInput" class="hidden">

@@ -1,10 +1,10 @@
 # Android 技术方案
 
-更新：2026-11-21。当前实现路径依据本仓库源码；未做本版本真机验收。
+更新：2026-11-22。当前实现路径依据本仓库源码；未做本版本真机验收。
 
 ## 容器与构建
 
-包名 `com.yixianzhi.app`，显示名“衣先知”，开发版本 `1.4.1` / versionCode `7`。最低 API 24，编译/目标 API 36，构建工具 36.0.0，Java 21。
+包名 `com.yixianzhi.app`，显示名“衣先知”，开发版本 `1.5.0` / versionCode `8`。最低 API 24，编译/目标 API 36，构建工具 36.0.0，Java 21。
 
 `npm run build:web` 根据白名单生成 `www/`；`cap sync android` 将它同步到 Android 工程。APK 内本地 origin 为 `https://localhost`，远程后端地址单独配置，页面不是从服务器远程加载。
 

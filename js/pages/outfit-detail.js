@@ -20,6 +20,8 @@
 
     function render() {
       const its = items.map(itemById).filter(Boolean);
+      let contextNode=$('#detailContext');if(!contextNode){contextNode=document.createElement('p');contextNode.id='detailContext';contextNode.className='outfit-context';$('#pieces').before(contextNode);}
+      contextNode.textContent=[its.some(i=>i.ownership==='wishlist')?'试搭 · 含未购买衣物':'',o.context?.date,o.context?.scene,o.context?.temperature!=null?o.context.temperature+'°C · 手动设置':''].filter(Boolean).join(' · ');
       const changed = items.join(",") !== o.items.join(",");
       const missing=items.length-its.length;$("#missingItems").hidden=!missing;$("#missingItems").textContent=missing ? `有 ${missing} 件衣物已移除，可在编辑搭配中重新选择。` : "";
       if(!its.length){$("#hero").innerHTML="<p>这套搭配的衣物已移除</p>";$("#pieces").innerHTML="";return;}
